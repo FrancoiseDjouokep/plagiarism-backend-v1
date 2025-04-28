@@ -2,8 +2,10 @@ package com.example.plagiarism1.service;
 
 import com.example.plagiarism1.model.Analysis;
 import com.example.plagiarism1.model.Document;
+import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.repository.AnalysisRepository;
 import com.example.plagiarism1.repository.DocumentRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,6 +81,8 @@ public class AnalysisService {
         ana.setSourceDocumentId(uploadedDoc.getId());
         ana.setSimilarityScore(similarity);
         ana.setTargetDocumentId(documentExitant.getId());
+        Utilisateur utilisateur = (Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        ana.setUtilisateur(utilisateur);
 
         return analysisRepository.save(ana);
     }

@@ -25,8 +25,10 @@ public class Document {
     private LocalDateTime uploadDate;
     private long fileSize;
     private  int wordCount;
+    @ManyToOne
+    private Utilisateur utilisateur;
 
-    public Document(long id, int wordCount, long fileSize, LocalDateTime uploadDate, String translationLanguage, String language, String content, String translatedContent, String filename, String title) {
+    public Document(long id, int wordCount, long fileSize, LocalDateTime uploadDate, String translationLanguage, String language, String content, String translatedContent, String filename, String title, Utilisateur utilisateur) {
         this.id = id;
         this.wordCount = wordCount;
         this.fileSize = fileSize;
@@ -37,6 +39,7 @@ public class Document {
         this.translatedContent = translatedContent;
         this.filename = filename;
         this.title = title;
+        this.utilisateur = utilisateur;
     }
 
     public Document() {
@@ -121,5 +124,13 @@ public class Document {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public Utilisateur getUtilisateur() {
+        return utilisateur;
+    }
+
+    public void setUtilisateur(Utilisateur utilisateur) {
+        this.utilisateur = utilisateur;
     }
 }

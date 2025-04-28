@@ -1,9 +1,6 @@
 package com.example.plagiarism1.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
@@ -23,8 +20,10 @@ public class Analysis {
     private LocalDateTime creationDate;
     private Boolean isCrossLanguage;
     private  String status;
+    @ManyToOne
+    private Utilisateur utilisateur;
 
-    public Analysis(long id, String status, Boolean isCrossLanguage, LocalDateTime creationDate, double threshold, int nGramSize, double similarityScore, long targetDocumentId, long sourceDocumentId) {
+    public Analysis(long id, String status, Boolean isCrossLanguage, LocalDateTime creationDate, double threshold, int nGramSize, double similarityScore, long targetDocumentId, long sourceDocumentId, Utilisateur utilisateur) {
         this.id = id;
         this.status = status;
         this.isCrossLanguage = isCrossLanguage;
@@ -34,6 +33,7 @@ public class Analysis {
         this.similarityScore = similarityScore;
         this.targetDocumentId = targetDocumentId;
         this.sourceDocumentId = sourceDocumentId;
+        this.utilisateur = utilisateur;
     }
 
     public Analysis() {
@@ -110,5 +110,13 @@ public class Analysis {
 
     public void setSourceDocumentId(long sourceDocumentId) {
         this.sourceDocumentId = sourceDocumentId;
+    }
+
+    public Utilisateur getUtilisateur() {
+        return utilisateur;
+    }
+
+    public void setUtilisateur(Utilisateur utilisateur) {
+        this.utilisateur = utilisateur;
     }
 }

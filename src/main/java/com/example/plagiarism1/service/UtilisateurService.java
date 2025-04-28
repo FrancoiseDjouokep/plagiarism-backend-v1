@@ -27,25 +27,29 @@ public class UtilisateurService implements UserDetailsService {
         this.validationService = validationService;
     }
 
-    public void inscription(Utilisateur utilisateur){
-        if(!utilisateur.getEmail().contains("@")){
-            throw new RuntimeException("Votre email n'est pas valide");
+    public void inscription(Utilisateur utilisateur) {
+        // Validate email
+        if (!utilisateur.getEmail().matches("[^@]+@[^@]+\\.[^@]+")) {
+            throw new RuntimeException("Email invalide");
         }
-        if(!utilisateur.getEmail().contains(".")){
-            throw new RuntimeException("Votre email n'est pas valide");
-        }
-        Optional<Utilisateur> utilisateurOptional= this.utilisateurRepository.findByEmail(utilisateur.getEmail());
-        if(utilisateurOptional.isPresent()){
-            throw new RuntimeException("Votre email est deja utiliser");
-        }
-        String mdpCrypte =  this.passwordEncoder.encode(utilisateur.getPassword());
-        Role roleUtilisateur = new Role();
-        roleUtilisateur.setLibelle(String.valueOf(TypeDeRole.UTILISATEUR));
-        utilisateur.setRole(roleUtilisateur);
-        utilisateur.setPassword(mdpCrypte);
 
-        utilisateur= this.utilisateurRepository.save(utilisateur);
-        this.validationService.enregistrer(utilisateur);
+        // Check if email exists
+        if (utilisateurRepository.findByEmail(utilisateur.getEmail()).isPresent()) {
+            throw new RuntimeException("Email déjà utilisé");
+        }
+
+        // Hash password
+        utilisateur.setPassword(passwordEncoder.encode(utilisateur.getPassword()));
+
+        // Set default role if not provided
+        if (utilisateur.getRole() == null) {
+            Role defaultRole = new Role();
+            defaultRole.setLibelle("UTILISATEUR");
+            utilisateur.setRole(defaultRole);
+        }
+
+        utilisateurRepository.save(utilisateur);
+        validationService.enregistrer(utilisateur);
     }
 
     public void activation(Map<String, String> activation) {

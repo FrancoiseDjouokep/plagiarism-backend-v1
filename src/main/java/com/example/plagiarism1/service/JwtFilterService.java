@@ -1,5 +1,6 @@
 package com.example.plagiarism1.service;
 
+import com.example.plagiarism1.model.Jwt;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,16 +25,25 @@ public class JwtFilterService extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-    String token = null;
+        if (request.getServletPath().equals("/connexion") ||
+                request.getServletPath().equals("/inscription") || request.getServletPath().equals("/activation")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        String token = null;
     String username = null;
     boolean isTokenExpired = true;
+    Jwt tokenBD = null;
        final String authorization = request.getHeader("Authorization");
        if(authorization != null && authorization.startsWith("Bearer")){
            token = authorization.substring(7);
+           tokenBD = this.jwtService.tokenByValue(token);
            isTokenExpired = jwtService.isTokenExpired(token);
            username = jwtService.lireusername(token);
        }
-       if (!isTokenExpired && username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+       if (!isTokenExpired && username != null
+               && tokenBD.getUtilisateur().getEmail().equals(username)
+               && SecurityContextHolder.getContext().getAuthentication() == null){
            UserDetails userDetails = utilisateurService.loadUserByUsername(username);
            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
            SecurityContextHolder.getContext().setAuthentication(authenticationToken);

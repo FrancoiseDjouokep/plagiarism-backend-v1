@@ -1,9 +1,11 @@
 package com.example.plagiarism1.service;
 import com.example.plagiarism1.model.Document;
+import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.repository.DocumentRepository;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.springframework.http.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -36,6 +38,7 @@ public class DocumentService {
     }
 
     public Document uploadDocument(MultipartFile file, String title) {
+
         try {
             String extractedText = tika.parseToString(file.getInputStream()).replaceAll("\\r?\\n", "");
 
@@ -59,6 +62,8 @@ public class DocumentService {
             }
             doc.setWordCount(new String(extractedText).split(" ").length);
 
+            Utilisateur utilisateur = (Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            doc.setUtilisateur(utilisateur);
             return repository.save(doc);
         } catch (IOException | TikaException e) {
             throw new RuntimeException("Erreur lors du traitement du fichier", e);

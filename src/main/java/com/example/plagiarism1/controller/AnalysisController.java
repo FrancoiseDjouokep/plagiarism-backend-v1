@@ -20,7 +20,6 @@ public class AnalysisController {
         this.analysisService = analysisService;
     }
     @PostMapping
-    @io.swagger.v3.oas.annotations.Operation(summary = "analyse a document")
     public ResponseEntity<Analysis> analise(
             @RequestParam("file") @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary") MultipartFile file,
             @RequestParam("title") String title,

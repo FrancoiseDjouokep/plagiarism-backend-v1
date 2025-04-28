@@ -2,8 +2,10 @@ package com.example.plagiarism1.service;
 
 import com.example.plagiarism1.model.Analysis;
 import com.example.plagiarism1.model.Document;
+import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.repository.AnalysisRepository;
 import com.example.plagiarism1.repository.DocumentRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -78,6 +80,8 @@ public class BigAnalysisService {
             ana.setTargetDocumentId(doc.getId());
             ana.setSimilarityScore(similarity);
             double score = ana.getSimilarityScore();
+            Utilisateur utilisateur = (Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            ana.setUtilisateur(utilisateur);
             if (score >= 20){
                 analyses.add(analysisRepository.save(ana));
             }

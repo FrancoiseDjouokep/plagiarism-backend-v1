@@ -2,6 +2,8 @@ package com.example.plagiarism1.model;
 
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 
 @Entity
@@ -17,6 +19,7 @@ public class Jwt {
     private RefreshToken refreshToken;
     @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.MERGE})
     @JoinColumn(name = "utilisateur_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Utilisateur utilisateur;
 
     public Jwt(long id, String valeur, boolean desactive, boolean expire, RefreshToken refreshToken, Utilisateur utilisateur) {

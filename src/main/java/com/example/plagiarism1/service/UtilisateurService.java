@@ -4,12 +4,14 @@ import com.example.plagiarism1.TypeDeRole;
 import com.example.plagiarism1.model.Role;
 import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.model.Validation;
+import com.example.plagiarism1.repository.JwtRepository;
 import com.example.plagiarism1.repository.UtilisateurRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Map;
@@ -18,12 +20,14 @@ import java.util.Optional;
 @Service
 public class UtilisateurService implements UserDetailsService {
     private UtilisateurRepository utilisateurRepository;
+    private JwtRepository jwtRepository;
     private BCryptPasswordEncoder passwordEncoder;
     private ValidationService validationService;
 
-    public UtilisateurService(UtilisateurRepository utilisateurRepository, BCryptPasswordEncoder passwordEncoder, ValidationService validationService) {
+    public UtilisateurService(UtilisateurRepository utilisateurRepository, JwtRepository jwtRepository, BCryptPasswordEncoder passwordEncoder, ValidationService validationService) {
         this.utilisateurRepository = utilisateurRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtRepository=jwtRepository;
         this.validationService = validationService;
     }
 
@@ -65,7 +69,9 @@ public class UtilisateurService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return this.utilisateurRepository
-                .findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("Aucun utilisateur ne correspond a cette identifiant"));
+                .findByEmail(username)
+                .filter(Utilisateur::isActif) // Add this check
+                .orElseThrow(() -> new UsernameNotFoundException("Aucun utilisateur ne correspond a cette identifiant ou le compte n'est pas activé"));
     }
 
     /**
@@ -89,6 +95,8 @@ public class UtilisateurService implements UserDetailsService {
      * Complete the password reset process with the validation code and new password
      * @param resetPasswordData Map containing the code and new password
      */
+
+    @Transactional
     public void resetPassword(Map<String, String> resetPasswordData) {
         String code = resetPasswordData.get("code");
         String nouveauPassword = resetPasswordData.get("password");
@@ -107,6 +115,10 @@ public class UtilisateurService implements UserDetailsService {
 
         // Get the user and update password
         Utilisateur utilisateur = validation.getUtilisateur();
+
+        // Remove associated JWTs before updating
+        jwtRepository.deleteByUtilisateurId(utilisateur.getId());
+
         utilisateur.setPassword(passwordEncoder.encode(nouveauPassword));
         utilisateurRepository.save(utilisateur);
 

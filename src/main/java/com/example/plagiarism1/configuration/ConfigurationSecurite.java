@@ -46,10 +46,12 @@ public class ConfigurationSecurite {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/inscription").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/activation").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/connexion").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/refresh-token").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/inscription").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/activation").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/connexion").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/refresh-token").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/forgot-password").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/reset-password").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

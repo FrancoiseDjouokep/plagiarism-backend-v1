@@ -1,67 +1,144 @@
 package com.example.plagiarism1.controller;
 
-import ch.qos.logback.classic.Logger;
-import com.example.plagiarism1.AuthentificationDTO;
+import com.example.plagiarism1.dto.*;
+import com.example.plagiarism1.exception.AuthenticationException;
+import com.example.plagiarism1.exception.ValidationException;
+import com.example.plagiarism1.model.Role;
 import com.example.plagiarism1.model.Utilisateur;
+import com.example.plagiarism1.repository.UtilisateurRepository;
 import com.example.plagiarism1.service.JwtService;
 import com.example.plagiarism1.service.UtilisateurService;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.*;
+
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
-@Slf4j
+/**
+ * Contrôleur principal gérant toutes les opérations liées aux utilisateurs et à l'authentification
+ */
 @RestController
-@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping("/api")
+@CrossOrigin(origins = "*")
 public class UtilisateurController {
-    private UtilisateurService utilisateurService;
-    private AuthenticationManager authenticationManager;
-    private JwtService jwtService;
 
-    public UtilisateurController(UtilisateurService utilisateurService, AuthenticationManager authenticationManager, JwtService jwtService) {
+    private static final Logger logger = LoggerFactory.getLogger(UtilisateurController.class);
+
+    private final UtilisateurService utilisateurService;
+    private final AuthenticationManager authenticationManager;
+    private final UtilisateurRepository utilisateurRepository;
+    private final JwtService jwtService;
+
+    public UtilisateurController(
+            UtilisateurService utilisateurService,
+            AuthenticationManager authenticationManager,
+            UtilisateurRepository utilisateurRepository, JwtService jwtService) {
         this.utilisateurService = utilisateurService;
         this.authenticationManager = authenticationManager;
+        this.utilisateurRepository = utilisateurRepository;
         this.jwtService = jwtService;
     }
 
-    @PostMapping(path = "inscription")
-    public ResponseEntity<Map<String, String>> inscription(@RequestBody Utilisateur utilisateur) {
+    /**
+     * Inscription d'un nouvel utilisateur
+     */
+    @PostMapping("/inscription")
+    public ResponseEntity<ApiResponse> inscription(@Valid @RequestBody InscriptionRequest request) {
         try {
-            System.out.println("Inscription appelée !");
-            this.utilisateurService.inscription(utilisateur);
-            return ResponseEntity.ok(Map.of("message", "Inscription réussie"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            logger.info("Tentative d'inscription pour l'email: {}", request.getEmail());
+
+            // Conversion du DTO en entité
+            Utilisateur utilisateur = new Utilisateur();
+            utilisateur.setNom(request.getNom());
+            utilisateur.setPrenom(request.getPrenom());
+            utilisateur.setEmail(request.getEmail());
+            utilisateur.setPassword(request.getPassword());
+
+            // Création du rôle par défaut
+            Role defaultRole = new Role();
+            defaultRole.setLibelle("UTILISATEUR");
+            utilisateur.setRole(defaultRole);
+
+            // Appel au service pour l'inscription
+            utilisateurService.inscription(utilisateur);
+
+            logger.info("Inscription réussie pour l'email: {}", request.getEmail());
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse(true, "Inscription réussie. Veuillez vérifier votre email pour activer votre compte."));
+        } catch (ValidationException e) {
+            logger.warn("Erreur de validation lors de l'inscription: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (AuthenticationException e) {
+            logger.warn("Erreur d'authentification lors de l'inscription: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Erreur lors de l'inscription: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Une erreur est survenue lors de l'inscription."));
         }
     }
-    @PostMapping(path = "activation")
-    public void activation(@RequestBody Map<String, String> activation){
 
-        this.utilisateurService.activation(activation);
-    }
-
-    @PostMapping(path = "refresh-token")
-    public @ResponseBody Map<String, String> refreshToken(@RequestBody Map<String, String> refreshTokenRequest) {
-        return this.jwtService.refreshToken(refreshTokenRequest);
-    }
-
-    @PostMapping(path = "deconnexion")
-    public void deconnexion(){
-
-        this.jwtService.deconnexion();
-    }
-    @PostMapping(path = "connexion")
-    public ResponseEntity<Map<String, String>> connexion(@RequestBody AuthentificationDTO authentificationDTO) {
+    /**
+     * Activation d'un compte utilisateur
+     */
+    @PostMapping("/activation")
+    public ResponseEntity<ApiResponse> activation(@RequestBody ActivationRequest request) {
         try {
+            logger.info("Tentative d'activation avec le code: {}", request.getCode());
+
+            // Création d'une Map pour garder la compatibilité avec le service existant
+            Map<String, String> activationData = new HashMap<>();
+            activationData.put("code", request.getCode());
+
+            // Appel au service pour l'activation
+            utilisateurService.activation(activationData);
+
+            logger.info("Activation réussie avec le code: {}", request.getCode());
+            return ResponseEntity.ok(new ApiResponse(true, "Votre compte a été activé avec succès."));
+        } catch (ValidationException e) {
+            logger.warn("Erreur de validation lors de l'activation: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Erreur lors de l'activation: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Une erreur est survenue lors de l'activation du compte."));
+        }
+    }
+
+    /**
+     * Connexion d'un utilisateur
+     */
+    @PostMapping("/connexion")
+    public ResponseEntity<ApiResponse> connexion(@Valid @RequestBody AuthentificationDTO authentificationDTO) {
+        try {
+            logger.info("Tentative de connexion pour l'utilisateur: {}", authentificationDTO.username());
+
+            // Vérification préalable si le compte existe et son statut d'activation
+            try {
+                Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findByEmail(authentificationDTO.username());
+                if (utilisateurOpt.isPresent() && !utilisateurOpt.get().isActif()) {
+                    logger.warn("Tentative de connexion à un compte non activé: {}", authentificationDTO.username());
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(new ApiResponse(false, "Compte non activé. Veuillez vérifier votre email pour activer votre compte."));
+                }
+            } catch (Exception e) {
+                // Ignorer les erreurs lors de cette vérification préliminaire
+                logger.debug("Erreur lors de la vérification préliminaire: {}", e.getMessage());
+            }
+            // Authentification via Spring Security
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             authentificationDTO.username(),
@@ -70,50 +147,111 @@ public class UtilisateurController {
             );
 
             if (auth.isAuthenticated()) {
-                return ResponseEntity.ok(jwtService.generate(authentificationDTO.username()));
+                // Génération des tokens JWT
+                Map<String, String> tokens = jwtService.generate(authentificationDTO.username());
+
+                logger.info("Connexion réussie pour l'utilisateur: {}", authentificationDTO.username());
+                return ResponseEntity.ok(new ApiResponse(true, "Connexion réussie", tokens));
+            } else {
+                logger.warn("Échec d'authentification pour l'utilisateur: {}", authentificationDTO.username());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse(false, "Échec de l'authentification"));
             }
         } catch (DisabledException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Compte non activé"));
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Identifiants invalides"));
+            logger.warn("Tentative de connexion à un compte non activé: {}", authentificationDTO.username());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse(false, "Compte non activé"));
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            logger.warn("Identifiants invalides pour l'utilisateur: {}", authentificationDTO.username());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, "Identifiants invalides"));
+        } catch (Exception e) {
+            logger.error("Erreur lors de la connexion: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Une erreur est survenue lors de la connexion."));
         }
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     /**
-     * Endpoint to request a password reset
-     * @param requestBody Map containing user email
-     * @return Response with status
+     * Rafraîchissement du token JWT
+     */
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiResponse> refreshToken(@RequestBody Map<String, String> refreshTokenRequest) {
+        try {
+            logger.info("Tentative de rafraîchissement du token");
+
+            // Appel au service pour rafraîchir le token
+            Map<String, String> tokens = jwtService.refreshToken(refreshTokenRequest);
+
+            logger.info("Token rafraîchi avec succès");
+            return ResponseEntity.ok(new ApiResponse(true, "Token rafraîchi avec succès", tokens));
+        } catch (Exception e) {
+            logger.warn("Erreur lors du rafraîchissement du token: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    /**
+     * Déconnexion d'un utilisateur
+     */
+    @PostMapping("/deconnexion")
+    public ResponseEntity<ApiResponse> deconnexion() {
+        logger.info("Déconnexion d'un utilisateur");
+
+        // Appel au service pour la déconnexion
+        jwtService.deconnexion();
+
+        return ResponseEntity.ok(new ApiResponse(true, "Déconnexion réussie"));
+    }
+
+    /**
+     * Demande de réinitialisation de mot de passe
      */
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> demandeResetPassword(@RequestBody Map<String, String> requestBody) {
+    public ResponseEntity<ApiResponse> demandeResetPassword(@Valid @RequestBody PasswordResetRequest request) {
         try {
-            String email = requestBody.get("email");
-            // For security, always return the same message whether the email exists or not
-            utilisateurService.demandeResetPassword(email);
-            return ResponseEntity.ok("Si votre email existe dans notre système, vous recevrez un code de réinitialisation");
+            logger.info("Demande de réinitialisation de mot de passe pour l'email: {}", request.getEmail());
+
+            // Appel au service pour initier la réinitialisation
+            utilisateurService.demandeResetPassword(request.getEmail());
+
+            // Pour des raisons de sécurité, toujours retourner le même message
+            return ResponseEntity.ok(new ApiResponse(true,
+                    "Si votre email existe dans notre système, vous recevrez un code de réinitialisation."));
         } catch (Exception e) {
+            logger.error("Erreur lors de la demande de réinitialisation: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Une erreur est survenue lors de la demande de réinitialisation");
+                    .body(new ApiResponse(false, "Une erreur est survenue lors de la demande de réinitialisation."));
         }
     }
 
     /**
-     * Endpoint to reset password with validation code
-     * @param resetPasswordData Map containing code and new password
-     * @return Response with status
+     * Réinitialisation du mot de passe
      */
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> resetPasswordData) {
+    public ResponseEntity<ApiResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         try {
-            utilisateurService.resetPassword(resetPasswordData);
-            return ResponseEntity.ok("Votre mot de passe a été réinitialisé avec succès");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            logger.info("Tentative de réinitialisation de mot de passe avec le code: {}", request.getCode());
+
+            // Création d'une Map pour garder la compatibilité avec le service existant
+            Map<String, String> resetData = new HashMap<>();
+            resetData.put("code", request.getCode());
+            resetData.put("password", request.getPassword());
+
+            // Appel au service pour finaliser la réinitialisation
+            utilisateurService.resetPassword(resetData);
+
+            logger.info("Réinitialisation de mot de passe réussie");
+            return ResponseEntity.ok(new ApiResponse(true, "Votre mot de passe a été réinitialisé avec succès."));
+        } catch (ValidationException e) {
+            logger.warn("Erreur de validation lors de la réinitialisation: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, e.getMessage()));
         } catch (Exception e) {
+            logger.error("Erreur lors de la réinitialisation du mot de passe: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Une erreur est survenue lors de la réinitialisation du mot de passe");
+                    .body(new ApiResponse(false, "Une erreur est survenue lors de la réinitialisation du mot de passe."));
         }
     }
 }

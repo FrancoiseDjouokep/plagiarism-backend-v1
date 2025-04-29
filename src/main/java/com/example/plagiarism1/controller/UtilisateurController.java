@@ -80,4 +80,40 @@ public class UtilisateurController {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
+    /**
+     * Endpoint to request a password reset
+     * @param requestBody Map containing user email
+     * @return Response with status
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> demandeResetPassword(@RequestBody Map<String, String> requestBody) {
+        try {
+            String email = requestBody.get("email");
+            // For security, always return the same message whether the email exists or not
+            utilisateurService.demandeResetPassword(email);
+            return ResponseEntity.ok("Si votre email existe dans notre système, vous recevrez un code de réinitialisation");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Une erreur est survenue lors de la demande de réinitialisation");
+        }
+    }
+
+    /**
+     * Endpoint to reset password with validation code
+     * @param resetPasswordData Map containing code and new password
+     * @return Response with status
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> resetPasswordData) {
+        try {
+            utilisateurService.resetPassword(resetPasswordData);
+            return ResponseEntity.ok("Votre mot de passe a été réinitialisé avec succès");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Une erreur est survenue lors de la réinitialisation du mot de passe");
+        }
+    }
 }

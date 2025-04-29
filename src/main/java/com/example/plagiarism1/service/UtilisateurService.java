@@ -53,19 +53,64 @@ public class UtilisateurService implements UserDetailsService {
     }
 
     public void activation(Map<String, String> activation) {
-         Validation validation = this.validationService.lireEnFonctionDuCode(activation.get("code"));
-         if(Instant.now().isAfter(validation.getExpire())){
-             throw new RuntimeException("Votre delai est expirer");
-         }
+        Validation validation = this.validationService.lireEnFonctionDuCode(activation.get("code"));
+        if(Instant.now().isAfter(validation.getExpire())){
+            throw new RuntimeException("Votre delai est expirer");
+        }
         Utilisateur utilisateurActiver= this.utilisateurRepository.findById(validation.getUtilisateur().getId()).orElseThrow(() -> new RuntimeException("Utilisateur inconnu"));
-         utilisateurActiver.setActif(true);
-         this.utilisateurRepository.save(utilisateurActiver);
+        utilisateurActiver.setActif(true);
+        this.utilisateurRepository.save(utilisateurActiver);
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return this.utilisateurRepository
                 .findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("Aucun utilisateur ne correspond a cette identifiant"));
+    }
 
+    /**
+     * Start the password reset process by sending an email with a validation code
+     * @param email The user's email address
+     */
+    public void demandeResetPassword(String email) {
+        Optional<Utilisateur> utilisateurOptional = utilisateurRepository.findByEmail(email);
+
+        if (utilisateurOptional.isEmpty()) {
+            // For security reasons, don't reveal that the email doesn't exist
+            return;
+        }
+
+        Utilisateur utilisateur = utilisateurOptional.get();
+        // Generate and send validation code
+        validationService.enregistrer(utilisateur);
+    }
+
+    /**
+     * Complete the password reset process with the validation code and new password
+     * @param resetPasswordData Map containing the code and new password
+     */
+    public void resetPassword(Map<String, String> resetPasswordData) {
+        String code = resetPasswordData.get("code");
+        String nouveauPassword = resetPasswordData.get("password");
+
+        if (code == null || nouveauPassword == null || nouveauPassword.length() < 6) {
+            throw new RuntimeException("Données de réinitialisation invalides");
+        }
+
+        // Verify the validation code
+        Validation validation = validationService.lireEnFonctionDuCode(code);
+
+        // Check if the code is expired
+        if (Instant.now().isAfter(validation.getExpire())) {
+            throw new RuntimeException("Votre code de réinitialisation a expiré");
+        }
+
+        // Get the user and update password
+        Utilisateur utilisateur = validation.getUtilisateur();
+        utilisateur.setPassword(passwordEncoder.encode(nouveauPassword));
+        utilisateurRepository.save(utilisateur);
+
+        // Delete the used validation code
+        validationService.supprimer(validation);
     }
 }

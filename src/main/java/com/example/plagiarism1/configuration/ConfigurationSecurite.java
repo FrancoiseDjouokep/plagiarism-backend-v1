@@ -39,19 +39,24 @@ public class ConfigurationSecurite {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/inscription").permitAll()
                         .requestMatchers(HttpMethod.POST, "/activation").permitAll()
                         .requestMatchers(HttpMethod.POST, "/connexion").permitAll()
                         .requestMatchers(HttpMethod.POST, "/refresh-token").permitAll()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(httpSecuritySessionManagementConfigurer ->
-                        httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilterService, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
     // CORS Configuration
     @Bean

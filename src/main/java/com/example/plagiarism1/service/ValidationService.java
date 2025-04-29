@@ -20,23 +20,45 @@ public class ValidationService {
         this.notificationService = notificationService;
     }
 
-    public void enregistrer(Utilisateur utilisateur){
+    public void enregistrer(Utilisateur utilisateur) {
+        // Delete any existing validations for this user to avoid multiple active codes
+        this.validationRepository
+                .findByUtilisateur(utilisateur)
+                .ifPresent(validationRepository::delete);
+
         Validation validation = new Validation();
         validation.setUtilisateur(utilisateur);
+
         Instant creation = Instant.now();
         validation.setCreation(creation);
-        Instant expire = creation.plus(60,MINUTES);
- validation.setExpire(expire);
+
+        Instant expire = creation.plus(60, MINUTES);
+        validation.setExpire(expire);
+
         Random random = new Random();
         int randomInteger = random.nextInt(999999);
-        String code = String.format("%06d",randomInteger);
+        String code = String.format("%06d", randomInteger);
 
         validation.setCode(code);
         this.validationRepository.save(validation);
-        this.notificationService.envoyer(validation);
-    }
-    public Validation lireEnFonctionDuCode(String code){
-       return this.validationRepository.findByCode(code).orElseThrow(() -> new RuntimeException("Votre code est invalide"));
 
+        // Check if it's for password reset or account activation
+        if (utilisateur.isActif()) {
+            // For password reset
+            this.notificationService.envoyerResetPassword(validation);
+        } else {
+            // For account activation
+            this.notificationService.envoyer(validation);
+        }
+    }
+
+    public Validation lireEnFonctionDuCode(String code) {
+        return this.validationRepository
+                .findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Votre code est invalide"));
+    }
+
+    public void supprimer(Validation validation) {
+        this.validationRepository.delete(validation);
     }
 }

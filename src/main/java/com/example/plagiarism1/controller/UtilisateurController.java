@@ -3,6 +3,7 @@ package com.example.plagiarism1.controller;
 import com.example.plagiarism1.dto.*;
 import com.example.plagiarism1.exception.AuthenticationException;
 import com.example.plagiarism1.exception.ValidationException;
+import com.example.plagiarism1.model.Jwt;
 import com.example.plagiarism1.model.Role;
 import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.repository.UtilisateurRepository;
@@ -253,5 +254,31 @@ public class UtilisateurController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(false, "Une erreur est survenue lors de la réinitialisation du mot de passe."));
         }
+    }
+    @GetMapping("/me")
+    public ResponseEntity<UtilisateurDTO> getCurrentUser(
+            @RequestHeader("Authorization") String authHeader) {
+
+        // 1. Extraire le token
+        String token = authHeader.substring(7); // Supprimer "Bearer "
+
+        // 2. Valider le token via votre JwtService
+        Jwt jwt = jwtService.tokenByValue(token);
+
+        // 3. Récupérer l'utilisateur
+        Utilisateur utilisateur = jwt.getUtilisateur();
+
+        // 4. Convertir en DTO
+        return ResponseEntity.ok(mapToDTO(utilisateur));
+    }
+
+    private UtilisateurDTO mapToDTO(Utilisateur utilisateur) {
+        UtilisateurDTO dto = new UtilisateurDTO();
+        dto.setId(utilisateur.getId());
+        dto.setEmail(utilisateur.getEmail());
+        dto.setNom(utilisateur.getNom());
+        dto.setPrenom(utilisateur.getPrenom());
+        // Exclure les champs sensibles comme password
+        return dto;
     }
 }

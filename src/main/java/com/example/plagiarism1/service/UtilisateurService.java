@@ -1,11 +1,14 @@
 package com.example.plagiarism1.service;
 
 import com.example.plagiarism1.TypeDeRole;
+import com.example.plagiarism1.dto.UtilisateurDTO;
 import com.example.plagiarism1.model.Role;
 import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.model.Validation;
 import com.example.plagiarism1.repository.JwtRepository;
 import com.example.plagiarism1.repository.UtilisateurRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,6 +22,7 @@ import java.util.Optional;
 
 @Service
 public class UtilisateurService implements UserDetailsService {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
     private UtilisateurRepository utilisateurRepository;
     private JwtRepository jwtRepository;
     private BCryptPasswordEncoder passwordEncoder;
@@ -101,28 +105,42 @@ public class UtilisateurService implements UserDetailsService {
         String code = resetPasswordData.get("code");
         String nouveauPassword = resetPasswordData.get("password");
 
-        if (code == null || nouveauPassword == null || nouveauPassword.length() < 6) {
-            throw new RuntimeException("Données de réinitialisation invalides");
+        // Validation
+        if (code == null || nouveauPassword == null || nouveauPassword.length() < 8) {
+            throw new RuntimeException("Données invalides");
         }
 
-        // Verify the validation code
+        // 1. Trouver la validation sans supprimer quoi que ce soit
         Validation validation = validationService.lireEnFonctionDuCode(code);
-
-        // Check if the code is expired
-        if (Instant.now().isAfter(validation.getExpire())) {
-            throw new RuntimeException("Votre code de réinitialisation a expiré");
+        if (validation == null) {
+            throw new RuntimeException("Code invalide");
         }
 
-        // Get the user and update password
-        Utilisateur utilisateur = validation.getUtilisateur();
+        // 2. Vérifier l'expiration
+        if (Instant.now().isAfter(validation.getExpire())) {
+            throw new RuntimeException("Code expiré");
+        }
 
-        // Remove associated JWTs before updating
+        // 3. Récupérer l'utilisateur
+        Utilisateur utilisateur = validation.getUtilisateur();
+        if (utilisateur == null) {
+            throw new RuntimeException("Utilisateur introuvable");
+        }
+
+        // 4. Journalisation avant modification
+        logger.info("Reset password pour utilisateur ID: {}", utilisateur.getId());
+
+        // 5. Supprimer les JWT existants
         jwtRepository.deleteByUtilisateurId(utilisateur.getId());
 
+        // 6. Mettre à jour le mot de passe
         utilisateur.setPassword(passwordEncoder.encode(nouveauPassword));
         utilisateurRepository.save(utilisateur);
 
-        // Delete the used validation code
-        validationService.supprimer(validation);
+        // 7. NE PAS supprimer l'utilisateur - seulement la validation
+        validationService.supprimer(validation); // Doit seulement supprimer l'entrée Validation
+
+        logger.info("Mot de passe mis à jour pour utilisateur ID: {}", utilisateur.getId());
     }
+
 }

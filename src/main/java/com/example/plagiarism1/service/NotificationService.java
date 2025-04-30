@@ -50,6 +50,7 @@ public class NotificationService {
      * @param validation Objet validation contenant l'utilisateur et le code
      */
     public void envoyerResetPassword(Validation validation) {
+        String resetUrl = "http://localhost:3000/password";
         try {
             SimpleMailMessage mailMessage = new SimpleMailMessage();
             mailMessage.setTo(validation.getUtilisateur().getEmail());
@@ -58,7 +59,7 @@ public class NotificationService {
                     "Bonjour %s, \n\n" +
                             "Nous avons reçu une demande de réinitialisation de mot de passe pour votre compte. \n\n" +
                             "Votre code de réinitialisation est: %s \n\n" +
-                            "Pour réinitialiser votre mot de passe, veuillez utiliser ce code sur notre site. \n\n" +
+                            "Pour réinitialiser votre mot de passe, veuillez utiliser ce code sur notre site:" + resetUrl + ". \n\n" +
                             "Ce code expirera dans 60 minutes. Si vous n'avez pas demandé cette réinitialisation, " +
                             "vous pouvez ignorer cet email. \n\n" +
                             "Cordialement,\n" +

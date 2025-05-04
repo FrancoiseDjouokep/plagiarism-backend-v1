@@ -1,6 +1,7 @@
 package com.example.plagiarism1.model;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,6 +13,7 @@ import java.util.Collections;
  * Entité représentant un utilisateur dans le système
  * Implémente UserDetails pour l'intégration avec Spring Security
  */
+
 @Entity
 @Table(name = "Utilisateur")
 public class Utilisateur implements UserDetails {
@@ -35,7 +37,7 @@ public class Utilisateur implements UserDetails {
     @Column(nullable = false)
     private boolean actif = false;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "role_id")
     private Role role;
 
@@ -110,6 +112,61 @@ public class Utilisateur implements UserDetails {
         this.password = password;
     }
 
+//    public static Utilisateur.Builder builder() {
+//        return new Utilisateur.Builder();
+//    }
+//
+//    public static class Builder {
+//        private long id;
+//        private String nom;
+//        private String prenom;
+//        private String password;
+//        private String email;
+//        private boolean actif = false;
+//        private Role role;
+//
+//        public Utilisateur.Builder id(long id) {
+//            this.id = id;
+//            return this;
+//        }
+//
+//        public Utilisateur.Builder nom(String nom) {
+//            this.nom = nom;
+//            return this;
+//        }
+//
+//
+//        public Utilisateur.Builder prenom(String prenom) {
+//            this.prenom = prenom;
+//            return this;
+//        }
+//
+//        public Utilisateur.Builder password(String password) {
+//            this.password = password;
+//            return this;
+//        }
+//
+//        public Utilisateur.Builder email(String email) {
+//            this.email = email;
+//            return this;
+//        }
+//
+//
+//        public Utilisateur.Builder actif(boolean actif) {
+//            this.actif = actif;
+//            return this;
+//        }
+//
+//
+//        public Utilisateur.Builder role(Role role) {
+//            this.role = role;
+//            return this;
+//        }
+//
+//        public Utilisateur build() {
+//            return new Utilisateur(id, nom, prenom, password, email, actif, role);
+//        }
+//    }
     // Méthodes de UserDetails
 
     @Override
@@ -176,4 +233,10 @@ public class Utilisateur implements UserDetails {
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
     }
+
+    @Transient
+    public boolean isNew() {
+        return id == null || id == 0L;
+    }
+
 }

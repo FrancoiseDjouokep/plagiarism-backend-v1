@@ -12,14 +12,37 @@ public class Role {
     @Enumerated(EnumType.STRING)
     private TypeDeRole libelle;
 
-    public Role(long id, String libelle) {
+    public Role(long id, TypeDeRole libelle) {
         this.id = id;
-        this.libelle = TypeDeRole.valueOf(libelle);
+        this.libelle = libelle;
     }
 
     public Role(){
 
     }
+
+    public static Role.Builder builder() {
+        return new Role.Builder();
+    }
+
+    public static class Builder {
+        private long id ;
+        private TypeDeRole libelle;
+
+        public Role.Builder id(long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Role.Builder libelle(TypeDeRole libelle) {
+            this.libelle = libelle;
+            return this;
+        }
+        public Role build() {
+            return new Role(id, libelle);
+        }
+    }
+
 
     public long getId() {
         return id;
@@ -33,7 +56,7 @@ public class Role {
         return libelle;
     }
 
-    public void setLibelle(String libelle) {
-        this.libelle = TypeDeRole.valueOf(libelle);
+    public void setLibelle(TypeDeRole libelle) {
+        this.libelle = libelle;
     }
 }

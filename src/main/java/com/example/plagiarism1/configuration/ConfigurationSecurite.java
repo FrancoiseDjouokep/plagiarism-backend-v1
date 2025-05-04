@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,6 +25,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+@EnableMethodSecurity
 @Configuration
 @EnableWebSecurity
 public class ConfigurationSecurite {
@@ -52,6 +54,11 @@ public class ConfigurationSecurite {
                         .requestMatchers(HttpMethod.POST, "/api/refresh-token").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/reset-password").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/documents/upload").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
+                        .requestMatchers(HttpMethod.GET, "/api/documents/select").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
+                        .requestMatchers(HttpMethod.POST, "/api/analysis").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
+                        .requestMatchers(HttpMethod.GET, "/api/select").hasAuthority("ROLE_ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

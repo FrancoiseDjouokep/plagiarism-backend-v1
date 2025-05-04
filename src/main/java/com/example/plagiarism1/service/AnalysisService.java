@@ -87,4 +87,8 @@ public class AnalysisService {
         return analysisRepository.save(ana);
     }
 
+    public List<Analysis> getAllAnalysis() {
+        return analysisRepository.findAll();
+    }
+
 }

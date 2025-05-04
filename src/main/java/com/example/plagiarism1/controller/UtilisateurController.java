@@ -1,8 +1,10 @@
 package com.example.plagiarism1.controller;
 
+import com.example.plagiarism1.TypeDeRole;
 import com.example.plagiarism1.dto.*;
 import com.example.plagiarism1.exception.AuthenticationException;
 import com.example.plagiarism1.exception.ValidationException;
+import com.example.plagiarism1.model.Document;
 import com.example.plagiarism1.model.Jwt;
 import com.example.plagiarism1.model.Role;
 import com.example.plagiarism1.model.Utilisateur;
@@ -14,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -67,7 +71,7 @@ public class UtilisateurController {
 
             // Création du rôle par défaut
             Role defaultRole = new Role();
-            defaultRole.setLibelle("UTILISATEUR");
+            defaultRole.setLibelle(TypeDeRole.ETUDIANT);
             utilisateur.setRole(defaultRole);
 
             // Appel au service pour l'inscription
@@ -280,5 +284,11 @@ public class UtilisateurController {
         dto.setPrenom(utilisateur.getPrenom());
         // Exclure les champs sensibles comme password
         return dto;
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/select")
+    public List<Utilisateur> list() {
+        return utilisateurService.list();
     }
 }

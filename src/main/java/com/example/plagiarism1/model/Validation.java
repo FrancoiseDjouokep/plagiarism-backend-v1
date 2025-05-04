@@ -14,7 +14,7 @@ public class Validation {
     private Instant expire;
     private Instant activation;
     private String code;
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     private Utilisateur utilisateur;
 
     public Validation(long id, Utilisateur utilisateur, String code, Instant activation, Instant expire, Instant creation) {

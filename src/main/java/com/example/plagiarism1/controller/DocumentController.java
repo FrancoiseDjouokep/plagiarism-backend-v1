@@ -28,7 +28,7 @@ public class DocumentController {
         return ResponseEntity.ok(uploadedDocument);
     }
 
-    @GetMapping
+    @GetMapping("/select")
     public List<Document> getAllDocuments() {
         return documentService.getAllDocuments();
     }

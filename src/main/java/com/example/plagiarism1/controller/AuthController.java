@@ -1,6 +1,7 @@
 package com.example.plagiarism1.controller;
 
 
+import com.example.plagiarism1.TypeDeRole;
 import com.example.plagiarism1.dto.*;
 import com.example.plagiarism1.model.Role;
 import com.example.plagiarism1.model.Utilisateur;
@@ -40,7 +41,7 @@ public class AuthController {
 
             // Set default role
             Role defaultRole = new Role();
-            defaultRole.setLibelle("UTILISATEUR");
+            defaultRole.setLibelle(TypeDeRole.ETUDIANT);
             utilisateur.setRole(defaultRole);
 
             // Call service for registration

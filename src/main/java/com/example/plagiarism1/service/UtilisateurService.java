@@ -2,6 +2,7 @@ package com.example.plagiarism1.service;
 
 import com.example.plagiarism1.TypeDeRole;
 import com.example.plagiarism1.dto.UtilisateurDTO;
+import com.example.plagiarism1.model.Analysis;
 import com.example.plagiarism1.model.Role;
 import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.model.Validation;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,7 +55,7 @@ public class UtilisateurService implements UserDetailsService {
         // Set default role if not provided
         if (utilisateur.getRole() == null) {
             Role defaultRole = new Role();
-            defaultRole.setLibelle("UTILISATEUR");
+            defaultRole.setLibelle(TypeDeRole.ETUDIANT);
             utilisateur.setRole(defaultRole);
         }
 
@@ -143,4 +146,12 @@ public class UtilisateurService implements UserDetailsService {
         logger.info("Mot de passe mis à jour pour utilisateur ID: {}", utilisateur.getId());
     }
 
+    public List<Utilisateur> list() {
+        final Iterable<Utilisateur> utilisateurIterable = this.utilisateurRepository.findAll();
+        List utilisateurs = new ArrayList();
+        for (Utilisateur utilisateur : utilisateurIterable) {
+              utilisateurs.add(utilisateur);
+        }
+        return utilisateurs;
+    }
 }

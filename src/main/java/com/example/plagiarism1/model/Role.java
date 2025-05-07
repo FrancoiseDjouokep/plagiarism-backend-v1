@@ -3,6 +3,8 @@ package com.example.plagiarism1.model;
 import com.example.plagiarism1.TypeDeRole;
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "Role")
 public class Role {
@@ -11,10 +13,13 @@ public class Role {
     private long id ;
     @Enumerated(EnumType.STRING)
     private TypeDeRole libelle;
+    @OneToMany(mappedBy = "role")
+    private List<Utilisateur> utilisateurs;
 
-    public Role(long id, TypeDeRole libelle) {
+    public Role(long id, TypeDeRole libelle, List<Utilisateur> utilisateurs) {
         this.id = id;
         this.libelle = libelle;
+        this.utilisateurs = utilisateurs;
     }
 
     public Role(){
@@ -28,6 +33,8 @@ public class Role {
     public static class Builder {
         private long id ;
         private TypeDeRole libelle;
+        private List<Utilisateur> utilisateurs;
+
 
         public Role.Builder id(long id) {
             this.id = id;
@@ -38,8 +45,13 @@ public class Role {
             this.libelle = libelle;
             return this;
         }
+
+        public Role.Builder utilisateur(List<Utilisateur> utilisateurs) {
+            this.utilisateurs = utilisateurs;
+            return this;
+        }
         public Role build() {
-            return new Role(id, libelle);
+            return new Role(id, libelle, utilisateurs);
         }
     }
 
@@ -59,4 +71,12 @@ public class Role {
     public void setLibelle(TypeDeRole libelle) {
         this.libelle = libelle;
     }
+    public List<Utilisateur> getUtilisateurs() {
+        return utilisateurs;
+    }
+
+    public void setUtilisateurs(List<Utilisateur> utilisateurs) {
+        this.utilisateurs = utilisateurs;
+    }
+
 }

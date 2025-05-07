@@ -25,8 +25,11 @@ public class JwtFilterService extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (request.getServletPath().equals("/connexion") ||
-                request.getServletPath().equals("/inscription") || request.getServletPath().equals("/activation")) {
+        if (request.getServletPath().startsWith("/connexion") ||
+                request.getServletPath().startsWith("/inscription") ||
+                request.getServletPath().startsWith("/activation") ||
+                request.getServletPath().startsWith("/oauth2") ||
+                request.getServletPath().startsWith("/login/oauth2"))  {
             filterChain.doFilter(request, response);
             return;
         }

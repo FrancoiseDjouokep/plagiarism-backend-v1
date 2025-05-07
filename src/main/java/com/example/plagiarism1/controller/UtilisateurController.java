@@ -291,4 +291,5 @@ public class UtilisateurController {
     public List<Utilisateur> list() {
         return utilisateurService.list();
     }
+
 }

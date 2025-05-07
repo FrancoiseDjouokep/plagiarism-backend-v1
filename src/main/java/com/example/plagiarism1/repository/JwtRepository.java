@@ -5,10 +5,12 @@ import com.example.plagiarism1.model.Jwt;
 import org.apache.tika.langdetect.optimaize.OptimaizeLangDetector;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
+@Repository
 public interface JwtRepository extends JpaRepository<Jwt, Long> {
     Optional<Jwt> findByValeurAndDesactiveAndExpire(String valeur, boolean desactive, boolean expire);
 

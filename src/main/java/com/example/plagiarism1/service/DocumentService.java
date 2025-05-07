@@ -40,8 +40,9 @@ public class DocumentService {
     public Document uploadDocument(MultipartFile file, String title) {
 
         try {
-            String extractedText = tika.parseToString(file.getInputStream()).replaceAll("\\r?\\n", "");
+            String fullText = tika.parseToString(file.getInputStream()).replaceAll("\\r?\\n", "");
 
+            String extractedText = filterContent(fullText);
             String language = detectLanguage(extractedText);
             String source = "en";
              String target = "fr";
@@ -116,6 +117,38 @@ public class DocumentService {
         }
     }
 
+
+    private String filterContent(String fullText) {
+        // Normalize line endings and clean up text
+        String normalizedText = fullText.replaceAll("\\r?\\n", " ").replaceAll("\\s+", " ").trim();
+
+        // Try to find the introduction section using common patterns
+        String[] introductionMarkers = {
+                "introduction",
+                "1 introduction",
+                "chapter 1",
+                "1. introduction",
+                "1.0 introduction"
+        };
+
+        for (String marker : introductionMarkers) {
+            int introIndex = normalizedText.toLowerCase().indexOf(marker.toLowerCase());
+            if (introIndex > 0) {
+                // Found introduction - return text from this point
+                return normalizedText.substring(introIndex);
+            }
+        }
+
+        // Fallback: If no introduction found, try to skip first N words
+        String[] words = normalizedText.split("\\s+");
+        if (words.length > 500) { // Skip first 500 words if document is long
+            return String.join(" ", Arrays.copyOfRange(words, 500, words.length));
+        }
+
+        return normalizedText; // Fallback to full text if no better option
+    }
+
+    // ... rest of your existing methods ...
     public List<Document> getAllDocuments() {
         return repository.findAll();
     }

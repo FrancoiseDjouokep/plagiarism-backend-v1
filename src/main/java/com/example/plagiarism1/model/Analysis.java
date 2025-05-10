@@ -3,6 +3,7 @@ package com.example.plagiarism1.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 public class Analysis {
@@ -20,10 +21,21 @@ public class Analysis {
     private LocalDateTime creationDate;
     private Boolean isCrossLanguage;
     private  String status;
+
+    @ElementCollection
+    @CollectionTable(name = "analysis_suspect_phrases_source", joinColumns = @JoinColumn(name = "analysis_id"))
+
+    private List<String> suspectPhrasesSource;
+
+    @ElementCollection
+    @CollectionTable(name = "analysis_suspect_phrases_target", joinColumns = @JoinColumn(name = "analysis_id"))
+
+    private List<String> suspectPhrasesTarget;
+
     @ManyToOne
     private Utilisateur utilisateur;
 
-    public Analysis(long id, String status, Boolean isCrossLanguage, LocalDateTime creationDate, double threshold, int nGramSize, double similarityScore, long targetDocumentId, long sourceDocumentId, Utilisateur utilisateur) {
+    public Analysis(long id, String status, Boolean isCrossLanguage, LocalDateTime creationDate, double threshold, int nGramSize, double similarityScore, long targetDocumentId, long sourceDocumentId, List<String> suspectPhrasesSource, List<String> suspectPhrasesTarget, Utilisateur utilisateur) {
         this.id = id;
         this.status = status;
         this.isCrossLanguage = isCrossLanguage;
@@ -33,6 +45,8 @@ public class Analysis {
         this.similarityScore = similarityScore;
         this.targetDocumentId = targetDocumentId;
         this.sourceDocumentId = sourceDocumentId;
+        this.suspectPhrasesSource = suspectPhrasesSource;
+        this.suspectPhrasesTarget = suspectPhrasesTarget;
         this.utilisateur = utilisateur;
     }
 
@@ -119,4 +133,21 @@ public class Analysis {
     public void setUtilisateur(Utilisateur utilisateur) {
         this.utilisateur = utilisateur;
     }
+
+    public List<String> getSuspectPhrasesSource() {
+        return suspectPhrasesSource;
+    }
+
+    public void setSuspectPhrasesSource(List<String> suspectPhrasesSource) {
+        this.suspectPhrasesSource = suspectPhrasesSource;
+    }
+
+    public List<String> getSuspectPhrasesTarget() {
+        return suspectPhrasesTarget;
+    }
+
+    public void setSuspectPhrasesTarget(List<String> suspectPhrasesTarget) {
+        this.suspectPhrasesTarget = suspectPhrasesTarget;
+    }
+
 }

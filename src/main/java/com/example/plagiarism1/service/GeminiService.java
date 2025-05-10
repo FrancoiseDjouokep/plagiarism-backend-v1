@@ -16,7 +16,7 @@ public class GeminiService {
     public String detectAi(String texte) {
 
         RestTemplate restTemplate = new RestTemplate();
-        String prompt = "\"Analyse ce texte et décide s’il a été généré par une IA ou écrit par un humain. Réponds uniquement par : IA ou Humain.  \n" + "Si tu n’es pas sûr, choisis 'Humain'.\"\n\n\nTexte : \"" + texte + "\"";
+        String prompt = "\"Analyse ce texte et décide s’il a été généré par une IA ou écrit par un humain. Réponds uniquement par : IA ou Humain.  \n" + texte + "\"";
 
         Map<String, Object> part = new HashMap<>();
         part.put("text", prompt);

@@ -25,10 +25,13 @@ public class Document {
     private LocalDateTime uploadDate;
     private long fileSize;
     private  int wordCount;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String ngrams;
     @ManyToOne
     private Utilisateur utilisateur;
 
-    public Document(long id, int wordCount, long fileSize, LocalDateTime uploadDate, String translationLanguage, String language, String content, String translatedContent, String filename, String title, Utilisateur utilisateur) {
+    public Document(long id, int wordCount, long fileSize, LocalDateTime uploadDate, String translationLanguage, String language, String content, String translatedContent, String filename, String title, String ngrams, Utilisateur utilisateur) {
         this.id = id;
         this.wordCount = wordCount;
         this.fileSize = fileSize;
@@ -39,6 +42,7 @@ public class Document {
         this.translatedContent = translatedContent;
         this.filename = filename;
         this.title = title;
+        this.ngrams = ngrams;
         this.utilisateur = utilisateur;
     }
 
@@ -124,6 +128,14 @@ public class Document {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getNgrams() {
+        return ngrams;
+    }
+
+    public void setNgrams(String ngrams) {
+        this.ngrams = ngrams;
     }
 
     public Utilisateur getUtilisateur() {

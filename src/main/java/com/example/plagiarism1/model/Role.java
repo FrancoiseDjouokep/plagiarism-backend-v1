@@ -1,6 +1,7 @@
 package com.example.plagiarism1.model;
 
 import com.example.plagiarism1.TypeDeRole;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ public class Role {
     @Enumerated(EnumType.STRING)
     private TypeDeRole libelle;
     @OneToMany(mappedBy = "role")
+    @JsonIgnore
     private List<Utilisateur> utilisateurs;
 
     public Role(long id, TypeDeRole libelle, List<Utilisateur> utilisateurs) {

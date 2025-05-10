@@ -10,5 +10,6 @@ import java.util.List;
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findByTitleContaining (String title);
     List<Document> findByLanguage (String language);
+    List<Document> findAllByIdNot(Long id);
 
 }

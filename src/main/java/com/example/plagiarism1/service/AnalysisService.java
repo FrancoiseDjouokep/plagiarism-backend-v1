@@ -33,38 +33,21 @@ public class AnalysisService {
             throw new RuntimeException("Le document n'existe pas dans la base de données.");
         }
 
-       Document uploadedDoc = documentService.uploadDocument(file, title);
-        String language1 = documentExitant.getLanguage();
-        String language2 = uploadedDoc.getLanguage();
+        Document uploadedDoc = documentService.uploadDocument(file, title);
+
+        // Récupération des n-grams stockés
+        String[] ngrams1 = documentExitant.getNgrams().split("\\s*\\|\\s*");
+        String[] ngrams2 = uploadedDoc.getNgrams().split("\\s*\\|\\s*");
 
         Map<String, Integer> ngram1 = new HashMap<>();
         Map<String, Integer> ngram2 = new HashMap<>();
-        int n = 3;
-        String[] token1;
-        if (language2.equals(language1)) {
-            token1 = documentExitant.getContent().split(" ");
-        } else {
-            token1 = documentExitant.getTranslatedContent().split(" ");
+
+        for (String ng : ngrams1) {
+            ngram1.put(ng, ngram1.getOrDefault(ng, 0) + 1);
         }
 
-        String[] token2 = uploadedDoc.getContent().split(" ");
-
-        for (int i = 0; i <= token1.length - n; i++) {
-            StringBuilder ngram = new StringBuilder();
-            for (int j = 0; j < n; j++) {
-                ngram.append(token1[i + j]);
-            }
-            String ngramStr = ngram.toString().trim();
-            ngram1.put(ngramStr, ngram1.getOrDefault(ngramStr, 0) + 1);
-        }
-
-        for (int i = 0; i <= token2.length - n; i++) {
-            StringBuilder ngram = new StringBuilder();
-            for (int j = 0; j < n; j++) {
-                ngram.append(token2[i + j]);
-            }
-            String ngramStr = ngram.toString().trim();
-            ngram2.put(ngramStr, ngram2.getOrDefault(ngramStr, 0) + 1);
+        for (String ng : ngrams2) {
+            ngram2.put(ng, ngram2.getOrDefault(ng, 0) + 1);
         }
 
         int intersection = 0;

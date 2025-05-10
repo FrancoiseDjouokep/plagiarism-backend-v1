@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class DocumentService {
@@ -62,6 +59,21 @@ public class DocumentService {
                 doc.setTranslationLanguage(target);
             }
             doc.setWordCount(new String(extractedText).split(" ").length);
+            int n = 5;
+            String[] tokens;
+
+            if ("fr".equals(language)) {
+                tokens = extractedText.split("\\s+");
+                doc.setNgrams(generateNgrams(tokens, n));
+            } else {
+                String translated = doc.getTranslatedContent();
+                if (translated != null) {
+                    tokens = translated.split("\\s+");
+                    doc.setNgrams(generateNgrams(tokens, n));
+                } else {
+                    doc.setNgrams(null);
+                }
+            }
 
             Utilisateur utilisateur = (Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             doc.setUtilisateur(utilisateur);
@@ -119,10 +131,9 @@ public class DocumentService {
 
 
     private String filterContent(String fullText) {
-        // Normalize line endings and clean up text
+
         String normalizedText = fullText.replaceAll("\\r?\\n", " ").replaceAll("\\s+", " ").trim();
 
-        // Try to find the introduction section using common patterns
         String[] introductionMarkers = {
                 "introduction",
                 "1 introduction",
@@ -134,21 +145,19 @@ public class DocumentService {
         for (String marker : introductionMarkers) {
             int introIndex = normalizedText.toLowerCase().indexOf(marker.toLowerCase());
             if (introIndex > 0) {
-                // Found introduction - return text from this point
                 return normalizedText.substring(introIndex);
             }
         }
 
-        // Fallback: If no introduction found, try to skip first N words
         String[] words = normalizedText.split("\\s+");
-        if (words.length > 500) { // Skip first 500 words if document is long
+        if (words.length > 500) {
             return String.join(" ", Arrays.copyOfRange(words, 500, words.length));
         }
 
-        return normalizedText; // Fallback to full text if no better option
+        return normalizedText;
     }
 
-    // ... rest of your existing methods ...
+
     public List<Document> getAllDocuments() {
         return repository.findAll();
     }
@@ -156,5 +165,17 @@ public class DocumentService {
     public void deleteDocument(Long id)  {
         repository.deleteById(id);
     }
+    private String generateNgrams(String[] tokens, int n) {
+        List<String> ngrams = new ArrayList<>();
+        for (int i = 0; i <= tokens.length - n; i++) {
+            StringBuilder sb = new StringBuilder();
+            for (int j = 0; j < n; j++) {
+                sb.append(tokens[i + j]).append(" ");
+            }
+            ngrams.add(sb.toString().trim());
+        }
+        return String.join(" | ", ngrams); // séparateur visible
+    }
+
 
 }

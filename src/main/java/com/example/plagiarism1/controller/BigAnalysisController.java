@@ -1,24 +1,29 @@
 package com.example.plagiarism1.controller;
 
+import com.example.plagiarism1.dto.DetailedAnalysisResponse;
 import com.example.plagiarism1.model.Analysis;
+import com.example.plagiarism1.repository.AnalysisRepository;
 import com.example.plagiarism1.service.AnalysisService;
 import com.example.plagiarism1.service.BigAnalysisService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bigAnalysis")
 public class BigAnalysisController {
     private final BigAnalysisService bigAnalysisService;
+    private final AnalysisRepository analysisRepository;
 
-    public BigAnalysisController(BigAnalysisService bigAnalysisService) {
+    public BigAnalysisController(BigAnalysisService bigAnalysisService, AnalysisRepository analysisRepository) {
         this.bigAnalysisService = bigAnalysisService;
+        this.analysisRepository = analysisRepository;
     }
 
     @PostMapping
@@ -28,6 +33,16 @@ public class BigAnalysisController {
             @RequestParam("title") String title) {
         List<Analysis> analisedDocument = bigAnalysisService.compareWithAllDocuments(file, title);
         return ResponseEntity.ok(analisedDocument);
+    }
+    @GetMapping("/analyses/{id}/suspect-phrases")
+    public ResponseEntity<DetailedAnalysisResponse> getSuspectPhrases(@PathVariable Long id) {
+        DetailedAnalysisResponse response = bigAnalysisService.getDetailedAnalysis(id);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/analyses/document/{id}/all-suspect-phrases")
+    public ResponseEntity<DetailedAnalysisResponse> getAllSuspectPhrases(@PathVariable Long id) {
+        DetailedAnalysisResponse response = bigAnalysisService.getAllDetailedAnalyses(id);
+        return ResponseEntity.ok(response);
     }
 
 }

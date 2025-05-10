@@ -1,5 +1,6 @@
 package com.example.plagiarism1.model;
 
+import com.example.plagiarism1.AuthProvider;
 import jakarta.persistence.*;
 import lombok.Builder;
 import org.springframework.security.core.GrantedAuthority;
@@ -41,6 +42,9 @@ public class Utilisateur implements UserDetails {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider;
+
     /**
      * Constructeur par défaut requis par JPA
      */
@@ -49,13 +53,14 @@ public class Utilisateur implements UserDetails {
     /**
      * Constructeur complet
      */
-    public Utilisateur(String nom, String prenom, String password, String email, boolean actif, Role role) {
+    public Utilisateur(String nom, String prenom, String password, String email, boolean actif, Role role, AuthProvider provider) {
         this.nom = nom;
         this.prenom = prenom;
         this.password = password;
         this.email = email;
         this.actif = actif;
         this.role = role;
+        this.provider = provider;
     }
 
     // Getters et Setters
@@ -108,6 +113,14 @@ public class Utilisateur implements UserDetails {
         this.role = role;
     }
 
+
+    public AuthProvider getProvider() {
+        return provider;
+    }
+
+    public void setProvider(AuthProvider provider) {
+        this.provider = provider;
+    }
     public void setPassword(String password) {
         this.password = password;
     }

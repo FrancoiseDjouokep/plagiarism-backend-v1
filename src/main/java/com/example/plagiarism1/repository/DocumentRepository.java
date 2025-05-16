@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-
+@Transactional
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findByLanguage (String language);

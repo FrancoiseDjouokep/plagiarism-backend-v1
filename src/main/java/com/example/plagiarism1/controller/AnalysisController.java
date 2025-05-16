@@ -6,6 +6,7 @@ import com.example.plagiarism1.service.AnalysisService;
 import com.example.plagiarism1.service.DocumentService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 

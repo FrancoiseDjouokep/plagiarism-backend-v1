@@ -2,11 +2,9 @@ package com.example.plagiarism1.service;
 
 import com.example.plagiarism1.TypeDeRole;
 import com.example.plagiarism1.dto.UtilisateurDTO;
-import com.example.plagiarism1.model.Analysis;
-import com.example.plagiarism1.model.Role;
-import com.example.plagiarism1.model.Utilisateur;
-import com.example.plagiarism1.model.Validation;
+import com.example.plagiarism1.model.*;
 import com.example.plagiarism1.repository.JwtRepository;
+import com.example.plagiarism1.repository.PendingUtilisateurRepository;
 import com.example.plagiarism1.repository.UtilisateurRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,37 +28,39 @@ public class UtilisateurService implements UserDetailsService {
     private JwtRepository jwtRepository;
     private BCryptPasswordEncoder passwordEncoder;
     private ValidationService validationService;
+    private final PendingUtilisateurRepository pendingRepo;
 
-    public UtilisateurService(UtilisateurRepository utilisateurRepository, JwtRepository jwtRepository, BCryptPasswordEncoder passwordEncoder, ValidationService validationService) {
+    public UtilisateurService(UtilisateurRepository utilisateurRepository, JwtRepository jwtRepository, BCryptPasswordEncoder passwordEncoder, ValidationService validationService, PendingUtilisateurRepository pendingRepo) {
         this.utilisateurRepository = utilisateurRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtRepository=jwtRepository;
         this.validationService = validationService;
+        this.pendingRepo = pendingRepo;
     }
 
     public void inscription(Utilisateur utilisateur) {
-        // Validate email
+        // Vérification email
         if (!utilisateur.getEmail().matches("[^@]+@[^@]+\\.[^@]+")) {
             throw new RuntimeException("Email invalide");
         }
 
-        // Check if email exists
-        if (utilisateurRepository.findByEmail(utilisateur.getEmail()).isPresent()) {
-            throw new RuntimeException("Email déjà utilisé");
+        if (pendingRepo.findByEmail(utilisateur.getEmail()).isPresent()) {
+            throw new RuntimeException("Cet email est déjà en attente de validation.");
         }
 
-        // Hash password
+        // Encoder mot de passe
         utilisateur.setPassword(passwordEncoder.encode(utilisateur.getPassword()));
 
-        // Set default role if not provided
-        if (utilisateur.getRole() == null) {
-            Role defaultRole = new Role();
-            defaultRole.setLibelle(TypeDeRole.ETUDIANT);
-            utilisateur.setRole(defaultRole);
-        }
+        // Créer PendingUtilisateur
+        PendingUtilisateur pending = new PendingUtilisateur();
+        pending.setNom(utilisateur.getNom());
+        pending.setPrenom(utilisateur.getPrenom());
+        pending.setEmail(utilisateur.getEmail());
+        pending.setPassword(utilisateur.getPassword());
+        pending.setRole(utilisateur.getRole());
+        pending.setProvider(utilisateur.getProvider());
 
-        utilisateurRepository.save(utilisateur);
-        validationService.enregistrer(utilisateur);
+        pendingRepo.save(pending);
     }
 
     public void activation(Map<String, String> activation) {

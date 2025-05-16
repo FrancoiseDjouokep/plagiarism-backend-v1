@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.*;
 
-@Transactional
+
 @Service
 public class AnalysisService {
     private final DocumentRepository repository;
@@ -38,18 +38,32 @@ public class AnalysisService {
         Document targetDoc = existingDocs.get(0);
         Document uploadedDoc = documentService.uploadDocument(file, title);
 
-        // Génération des n-grammes en map
-        String[] ngramsUploaded = uploadedDoc.getNgrams().split("\\s*\\|\\s*");
+        // Logging pour débogage
+        System.out.println("Uploaded doc ngrams: " + uploadedDoc.getNgrams());
+        System.out.println("Target doc ngrams: " + targetDoc.getNgrams());
+
+        // Génération des n-grammes en map avec normalisation
+        String[] ngramsUploaded = uploadedDoc.getNgrams().split("\\|");
         Map<String, Integer> ngram2 = new HashMap<>();
         for (String ng : ngramsUploaded) {
-            ngram2.put(ng, ngram2.getOrDefault(ng, 0) + 1);
+            String normalizedNg = ng.trim().toLowerCase();
+            if (!normalizedNg.isEmpty()) {
+                ngram2.put(normalizedNg, ngram2.getOrDefault(normalizedNg, 0) + 1);
+            }
         }
 
-        String[] ngramsTarget = targetDoc.getNgrams().split("\\s*\\|\\s*");
+        String[] ngramsTarget = targetDoc.getNgrams().split("\\|");
         Map<String, Integer> ngram1 = new HashMap<>();
         for (String ng : ngramsTarget) {
-            ngram1.put(ng, ngram1.getOrDefault(ng, 0) + 1);
+            String normalizedNg = ng.trim().toLowerCase();
+            if (!normalizedNg.isEmpty()) {
+                ngram1.put(normalizedNg, ngram1.getOrDefault(normalizedNg, 0) + 1);
+            }
         }
+
+        // Logging pour débogage
+        System.out.println("Ngram1 keys: " + ngram1.keySet());
+        System.out.println("Ngram2 keys: " + ngram2.keySet());
 
         // Intersection des n-grammes
         Set<String> suspectNgrams = new HashSet<>();
@@ -59,14 +73,21 @@ public class AnalysisService {
             }
         }
 
+        // Logging pour débogage
+        System.out.println("Intersection size: " + suspectNgrams.size());
+        System.out.println("Ngram1 size: " + ngram1.size());
+        System.out.println("Ngram2 size: " + ngram2.size());
+
         double similarity = ((double) suspectNgrams.size() / Math.max(ngram1.size(), ngram2.size())) * 100;
 
+        // Logging pour débogage
+        System.out.println("Calculated similarity: " + similarity);
 
         // Extraire les phrases contenant des n-grammes suspects
         List<String> phrasesSource = bigAnalysisService.extractMatchingSentences(uploadedDoc.getContent(), suspectNgrams);
         List<String> phrasesTarget = bigAnalysisService.extractMatchingSentences(targetDoc.getContent(), suspectNgrams);
 
-        // Créer et sauvegarder l’analyse
+        // Créer et sauvegarder l'analyse
         Analysis ana = new Analysis();
         ana.setCreationDate(LocalDateTime.now());
         ana.setSourceDocumentId(uploadedDoc.getId());
@@ -78,7 +99,6 @@ public class AnalysisService {
 
         return analysisRepository.save(ana);
     }
-
     public List<Analysis> getAllAnalysis() {
         return analysisRepository.findAll();
     }

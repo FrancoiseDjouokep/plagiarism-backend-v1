@@ -81,7 +81,7 @@ public class ConfigurationSecurite {
                         .requestMatchers(HttpMethod.GET, "/oauth2/authorization/google").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/documents/upload").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
                         .requestMatchers(HttpMethod.GET, "/api/documents/select").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
-                        .requestMatchers(HttpMethod.POST, "/api/analysis").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
+                        .requestMatchers(HttpMethod.POST, "/api/analysis/compare-by-title").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
                         .requestMatchers(HttpMethod.GET, "/api/select").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )

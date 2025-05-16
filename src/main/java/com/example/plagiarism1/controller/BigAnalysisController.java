@@ -35,14 +35,11 @@ public class BigAnalysisController {
         return ResponseEntity.ok(analisedDocument);
     }
     @GetMapping("/analyses/{id}/suspect-phrases")
-    public ResponseEntity<DetailedAnalysisResponse> getSuspectPhrases(@PathVariable Long id) {
-        DetailedAnalysisResponse response = bigAnalysisService.getDetailedAnalysis(id);
-        return ResponseEntity.ok(response);
-    }
-    @GetMapping("/analyses/document/{id}/all-suspect-phrases")
-    public ResponseEntity<DetailedAnalysisResponse> getAllSuspectPhrases(@PathVariable Long id) {
-        DetailedAnalysisResponse response = bigAnalysisService.getAllDetailedAnalyses(id);
-        return ResponseEntity.ok(response);
-    }
+    public ResponseEntity<DetailedAnalysisResponse> getSuspectPhrases(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "false") boolean highlight) {
 
+            DetailedAnalysisResponse response = bigAnalysisService.getDetailedAnalysis(id, highlight);
+            return ResponseEntity.ok(response);
+    }
 }

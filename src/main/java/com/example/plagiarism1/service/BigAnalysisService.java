@@ -12,7 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;@Service
+import java.util.stream.Collectors;
+@Service
 public class BigAnalysisService {
 
     private final DocumentRepository repository;
@@ -57,8 +58,8 @@ public class BigAnalysisService {
             double similarity = ((double) suspectNgrams.size() / Math.max(ngram1.size(), ngram2.size())) * 100;
 
             if (similarity >= 30) {
-                List<String> phrasesSource = extractMatchingPhrases(uploadedDoc.getContent(), suspectNgrams);
-                List<String> phrasesTarget = extractMatchingPhrases(doc.getContent(), suspectNgrams);
+                List<String> phrasesSource = extractMatchingSentences(uploadedDoc.getContent(), suspectNgrams);
+                List<String> phrasesTarget = extractMatchingSentences(doc.getContent(), suspectNgrams);
 
                 Analysis ana = new Analysis();
                 ana.setCreationDate(LocalDateTime.now());
@@ -76,20 +77,25 @@ public class BigAnalysisService {
         return analyses;
     }
 
-    private List<String> extractMatchingPhrases(String content, Set<String> ngrams) {
-        List<String> suspects = new ArrayList<>();
-        String[] tokens = content.split("\\s+");
-        int n = 5;
-        for (int i = 0; i <= tokens.length - n; i++) {
-            String phrase = String.join(" ", Arrays.copyOfRange(tokens, i, i + n)).trim();
-            if (ngrams.contains(phrase)) {
-                suspects.add(phrase);
+    public List<String> extractMatchingSentences(String content, Set<String> suspectNgrams) {
+        List<String> matchingSentences = new ArrayList<>();
+
+        // Split content into sentences (simple regex - adjust as needed)
+        String[] sentences = content.split("(?<=[.!?])\\s+");
+
+        for (String sentence : sentences) {
+            // Check if sentence contains ANY suspect n-gram
+            for (String ngram : suspectNgrams) {
+                if (sentence.contains(ngram)) {
+                    matchingSentences.add(sentence);
+                    break; // No need to check other ngrams for this sentence
+                }
             }
         }
-        return suspects;
+        return matchingSentences;
     }
 
-    public DetailedAnalysisResponse getDetailedAnalysis(Long analysisId) {
+    public DetailedAnalysisResponse getDetailedAnalysis(Long analysisId, boolean highlight) {
         Analysis analysis = analysisRepository.findById(analysisId)
                 .orElseThrow(() -> new RuntimeException("Analysis not found"));
 
@@ -101,46 +107,59 @@ public class BigAnalysisService {
 
         DetailedAnalysisResponse response = new DetailedAnalysisResponse();
         response.setSourceFullText(source.getContent());
-        response.setSourcePhrases(analysis.getSuspectPhrasesSource());
+
+        // Highlight matching sentences in source text
+        response.setSourcePhrases(Collections.singletonList(highlightMatches(
+                source.getContent(),
+                analysis.getSuspectPhrasesSource(),
+                true
+        )));
 
         DetailedAnalysisResponse.SimilarDocumentDTO dto = new DetailedAnalysisResponse.SimilarDocumentDTO();
         dto.setId(target.getId());
         dto.setTitle(target.getTitle());
-        dto.setMatchedPhrases(analysis.getSuspectPhrasesTarget());
+
+        // Highlight matching sentences in target text
+        dto.setMatchedPhrases(Collections.singletonList(highlightMatches(
+                target.getContent(),
+                analysis.getSuspectPhrasesTarget(),
+                false
+        )));
 
         response.setSimilarDocuments(List.of(dto));
         return response;
     }
 
-    // 🔥 Nouveau service pour retourner toutes les similarités avec le document source
-    public DetailedAnalysisResponse getAllDetailedAnalyses(Long uploadedDocId) {
-        Document uploaded = repository.findById(uploadedDocId)
-                .orElseThrow(() -> new RuntimeException("Uploaded document not found"));
 
-        List<Analysis> allAnalyses = analysisRepository.findBySourceDocumentId(uploadedDocId);
+    private Map<String, Integer> phraseToIdMap = new HashMap<>();
+    private int currentMatchId = 1;
 
-        DetailedAnalysisResponse response = new DetailedAnalysisResponse();
-        response.setSourceFullText(uploaded.getContent());
+    private String highlightMatches(String fullText, List<String> matchingSentences, boolean isSourceDocument) {
+        String highlighted = fullText;
 
-        Set<String> allSourcePhrases = allAnalyses.stream()
-                .flatMap(ana -> ana.getSuspectPhrasesSource().stream())
-                .collect(Collectors.toSet());
-        response.setSourcePhrases(new ArrayList<>(allSourcePhrases));
-
-        List<DetailedAnalysisResponse.SimilarDocumentDTO> documents = new ArrayList<>();
-        for (Analysis ana : allAnalyses) {
-            Document target = repository.findById(ana.getTargetDocumentId())
-                    .orElseThrow(() -> new RuntimeException("Target document not found"));
-
-            DetailedAnalysisResponse.SimilarDocumentDTO dto = new DetailedAnalysisResponse.SimilarDocumentDTO();
-            dto.setId(target.getId());
-            dto.setTitle(target.getTitle());
-            dto.setMatchedPhrases(ana.getSuspectPhrasesTarget());
-
-            documents.add(dto);
+        if (isSourceDocument) {
+            phraseToIdMap.clear();
+            currentMatchId = 1;
         }
 
-        response.setSimilarDocuments(documents);
-        return response;
+        for (String sentence : matchingSentences) {
+            int matchId;
+            if (phraseToIdMap.containsKey(sentence)) {
+                // Utiliser l'ID existant pour cette phrase
+                matchId = phraseToIdMap.get(sentence);
+            } else {
+                // Créer un nouvel ID pour cette phrase
+                matchId = currentMatchId++;
+                phraseToIdMap.put(sentence, matchId);
+            }
+
+            highlighted = highlighted.replace(
+                    sentence,
+                            "[" + matchId + "] " + sentence +
+                            " "
+            );
+        }
+        return highlighted;
     }
+
 }

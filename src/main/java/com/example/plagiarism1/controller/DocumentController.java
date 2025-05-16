@@ -1,22 +1,28 @@
 package com.example.plagiarism1.controller;
 
+import com.example.plagiarism1.dto.DocumentTitleDTO;
 import com.example.plagiarism1.model.Document;
+import com.example.plagiarism1.repository.DocumentRepository;
 import com.example.plagiarism1.service.DocumentService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/documents")
 public class DocumentController {
 
     private final DocumentService documentService;
-    public DocumentController(DocumentService documentService) {
+    private final DocumentRepository repository;
+    public DocumentController(DocumentService documentService, DocumentRepository repository) {
         this.documentService = documentService;
+        this.repository = repository;
     }
 
     @PostMapping("/upload")
@@ -38,4 +44,9 @@ public class DocumentController {
         documentService.deleteDocument(id);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/search")
+    public ResponseEntity<List<DocumentTitleDTO>> searchDocuments(@RequestParam String query) {
+        return ResponseEntity.ok(repository.searchByTitlePrefix(query));
+    }
+
 }

@@ -4,12 +4,12 @@ import com.example.plagiarism1.model.Analysis;
 import com.example.plagiarism1.model.Document;
 import com.example.plagiarism1.service.AnalysisService;
 import com.example.plagiarism1.service.DocumentService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/analysis")
@@ -19,12 +19,14 @@ public class AnalysisController {
     public AnalysisController(AnalysisService analysisService) {
         this.analysisService = analysisService;
     }
-    @PostMapping
-    public ResponseEntity<Analysis> analise(
-            @RequestParam("file") @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary") MultipartFile file,
+
+    @PostMapping(value = "/compare-by-title", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Analysis> analyzeDocument(
+            @RequestPart("file") MultipartFile file,
             @RequestParam("title") String title,
-            @RequestParam("id") long targetDocumentId) {
-        Analysis analisedDocument = analysisService.JaccardDistance(file, title, targetDocumentId);
-        return ResponseEntity.ok(analisedDocument);
+            @RequestParam("targetTitle") String targetDocumentTitle) {
+
+        Analysis analysis = analysisService.JaccardDistance(file, title, targetDocumentTitle);
+        return ResponseEntity.ok(analysis);
     }
 }

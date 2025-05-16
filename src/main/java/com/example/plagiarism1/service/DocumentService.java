@@ -161,7 +161,6 @@ public class DocumentService {
     public List<Document> getAllDocuments() {
         return repository.findAll();
     }
-
     public void deleteDocument(Long id)  {
         repository.deleteById(id);
     }

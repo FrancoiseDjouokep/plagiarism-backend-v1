@@ -16,10 +16,12 @@ public class Document {
     private String filename;
     @Lob
     @Column(columnDefinition = "TEXT")
+    @Basic(fetch = FetchType.EAGER)
     private String content;
     private String language ;
     @Lob
     @Column(columnDefinition = "TEXT")
+    @Basic(fetch = FetchType.EAGER)
     private String translatedContent;
     private String translationLanguage;
     private LocalDateTime uploadDate;
@@ -27,6 +29,7 @@ public class Document {
     private  int wordCount;
     @Lob
     @Column(columnDefinition = "TEXT")
+    @Basic(fetch = FetchType.EAGER)
     private String ngrams;
     @ManyToOne
     private Utilisateur utilisateur;

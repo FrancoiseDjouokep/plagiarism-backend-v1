@@ -45,7 +45,7 @@ public class AuthController {
             utilisateur.setRole(defaultRole);
 
             // Call service for registration
-            utilisateurService.inscription(utilisateur);
+//            utilisateurService.inscription(utilisateur);
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse(true, "Inscription réussie. Veuillez vérifier votre email pour activer votre compte."));

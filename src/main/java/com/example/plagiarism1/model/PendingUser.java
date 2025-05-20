@@ -1,46 +1,55 @@
 package com.example.plagiarism1.model;
 
-import com.example.plagiarism1.AuthProvider;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "PendingUtilisateur")
-public class PendingUtilisateur {
-
+@Table(name = "pending_users")
+public class PendingUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String nom;
+
+    @Column(nullable = false)
     private String prenom;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
     private String password;
-    private boolean actif = false;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "role_id")
     private Role role;
 
-    @Enumerated(EnumType.STRING)
-    private AuthProvider provider;
+    @Column(nullable = false)
+    private LocalDateTime creationDate = LocalDateTime.now();
 
-    private LocalDateTime dateInscription = LocalDateTime.now();
+    @Column(nullable = false)
+    private boolean emailVerified = false;
 
-    public PendingUtilisateur(Long id, String nom, String prenom, String email, String password, boolean actif, Role role, AuthProvider provider, LocalDateTime dateInscription) {
+    @OneToOne(mappedBy = "pendingUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private PendingValidation validation;
+
+    public PendingUser(Long id, String nom, String prenom, String email, String password, Role role, LocalDateTime creationDate, boolean emailVerified, PendingValidation validation) {
         this.id = id;
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
         this.password = password;
-        this.actif = actif;
         this.role = role;
-        this.provider = provider;
-        this.dateInscription = dateInscription;
+        this.creationDate = creationDate;
+        this.emailVerified = emailVerified;
+        this.validation = validation;
     }
 
-    public PendingUtilisateur() {
+    public PendingUser() {
+
     }
 
     public Long getId() {
@@ -83,14 +92,6 @@ public class PendingUtilisateur {
         this.password = password;
     }
 
-    public boolean isActif() {
-        return actif;
-    }
-
-    public void setActif(boolean actif) {
-        this.actif = actif;
-    }
-
     public Role getRole() {
         return role;
     }
@@ -99,19 +100,27 @@ public class PendingUtilisateur {
         this.role = role;
     }
 
-    public AuthProvider getProvider() {
-        return provider;
+    public LocalDateTime getCreationDate() {
+        return creationDate;
     }
 
-    public void setProvider(AuthProvider provider) {
-        this.provider = provider;
+    public void setCreationDate(LocalDateTime creationDate) {
+        this.creationDate = creationDate;
     }
 
-    public LocalDateTime getDateInscription() {
-        return dateInscription;
+    public boolean isEmailVerified() {
+        return emailVerified;
     }
 
-    public void setDateInscription(LocalDateTime dateInscription) {
-        this.dateInscription = dateInscription;
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
+    public PendingValidation getValidation() {
+        return validation;
+    }
+
+    public void setValidation(PendingValidation validation) {
+        this.validation = validation;
     }
 }

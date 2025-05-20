@@ -73,6 +73,10 @@ public class ConfigurationSecurite {
                                 "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/inscription").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/verification/verifier-email").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/pending-users").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/admin/valider-inscription/{pendingUserId}").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/admin/rejeter-inscription/{pendingUserId}").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/activation").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/connexion").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/refresh-token").permitAll()

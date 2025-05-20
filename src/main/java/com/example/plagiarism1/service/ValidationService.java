@@ -1,7 +1,10 @@
 package com.example.plagiarism1.service;
 
+import com.example.plagiarism1.model.PendingUser;
+import com.example.plagiarism1.model.PendingValidation;
 import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.model.Validation;
+import com.example.plagiarism1.repository.PendingValidationRepository;
 import com.example.plagiarism1.repository.ValidationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,10 +23,12 @@ public class ValidationService {
 
     private final ValidationRepository validationRepository;
     private final NotificationService notificationService;
+    private final PendingValidationRepository pendingValidationRepository;
 
-    public ValidationService(ValidationRepository validationRepository, NotificationService notificationService) {
+    public ValidationService(ValidationRepository validationRepository, NotificationService notificationService, PendingValidationRepository pendingValidationRepository) {
         this.validationRepository = validationRepository;
         this.notificationService = notificationService;
+        this.pendingValidationRepository = pendingValidationRepository;
     }
 
     /**
@@ -79,6 +84,36 @@ public class ValidationService {
         }
     }
 
+
+    @Transactional
+    public PendingValidation enregistrer(PendingUser pendingUser) {
+        logger.debug("Création d'un code pour PendingUser: {}", pendingUser.getEmail());
+
+        // Supprimer les anciennes validations existantes
+        pendingValidationRepository.deleteByPendingUser(pendingUser.getId());
+
+        // Créer une nouvelle validation
+        PendingValidation validation = new PendingValidation();
+        validation.setCode(String.format("%06d", new Random().nextInt(999999)));
+        validation.setCreation(Instant.now());
+        validation.setExpire(Instant.now().plus(60, MINUTES));
+        validation.setPendingUser(pendingUser);
+
+        // Sauvegarde et logs
+        pendingValidationRepository.save(validation);
+        logger.info("Code {} créé pour {}", validation.getCode(), pendingUser.getEmail());
+
+        return validation;
+    }
+    // Ajouter cette méthode pour lire la validation d'un pending user
+    public PendingValidation lireEnFonctionDuCodePending(String code) {
+        return pendingValidationRepository.findByCode(code)
+                .filter(v -> Instant.now().isBefore(v.getExpire()))
+                .orElseThrow(() -> {
+                    logger.error("Code invalide/expiré: {}", code);
+                    return new RuntimeException("Code invalide ou expiré");
+                });
+    }
     /**
      * Récupère une validation par son code
      * @param code Le code de validation

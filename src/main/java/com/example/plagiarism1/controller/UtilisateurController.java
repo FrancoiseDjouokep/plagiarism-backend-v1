@@ -4,12 +4,10 @@ import com.example.plagiarism1.TypeDeRole;
 import com.example.plagiarism1.dto.*;
 import com.example.plagiarism1.exception.AuthenticationException;
 import com.example.plagiarism1.exception.ValidationException;
-import com.example.plagiarism1.model.Document;
-import com.example.plagiarism1.model.Jwt;
-import com.example.plagiarism1.model.Role;
-import com.example.plagiarism1.model.Utilisateur;
+import com.example.plagiarism1.model.*;
 import com.example.plagiarism1.repository.UtilisateurRepository;
 import com.example.plagiarism1.service.JwtService;
+import com.example.plagiarism1.service.PendingUserService;
 import com.example.plagiarism1.service.UtilisateurService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -40,61 +38,66 @@ public class UtilisateurController {
     private static final Logger logger = LoggerFactory.getLogger(UtilisateurController.class);
 
     private final UtilisateurService utilisateurService;
+    private final PendingUserService pendingUserService; // Ajouté
     private final AuthenticationManager authenticationManager;
     private final UtilisateurRepository utilisateurRepository;
     private final JwtService jwtService;
 
     public UtilisateurController(
             UtilisateurService utilisateurService,
+            PendingUserService pendingUserService,
             AuthenticationManager authenticationManager,
-            UtilisateurRepository utilisateurRepository, JwtService jwtService) {
+            UtilisateurRepository utilisateurRepository,
+            JwtService jwtService) {
         this.utilisateurService = utilisateurService;
+        this.pendingUserService = pendingUserService; // Ajouté
         this.authenticationManager = authenticationManager;
         this.utilisateurRepository = utilisateurRepository;
         this.jwtService = jwtService;
     }
 
     /**
-     * Inscription d'un nouvel utilisateur
+     * Inscription d'un nouvel utilisateur (version modifiée)
      */
     @PostMapping("/inscription")
     public ResponseEntity<ApiResponse> inscription(@Valid @RequestBody InscriptionRequest request) {
         try {
             logger.info("Tentative d'inscription pour l'email: {}", request.getEmail());
 
-            // Conversion du DTO en entité
-            Utilisateur utilisateur = new Utilisateur();
-            utilisateur.setNom(request.getNom());
-            utilisateur.setPrenom(request.getPrenom());
-            utilisateur.setEmail(request.getEmail());
-            utilisateur.setPassword(request.getPassword());
+            // Conversion du DTO en entité PendingUser au lieu de Utilisateur
+            PendingUser pendingUser = new PendingUser();
+            pendingUser.setNom(request.getNom());
+            pendingUser.setPrenom(request.getPrenom());
+            pendingUser.setEmail(request.getEmail());
+            pendingUser.setPassword(request.getPassword());
 
             // Création du rôle par défaut
             Role defaultRole = new Role();
             defaultRole.setLibelle(TypeDeRole.ETUDIANT);
-            utilisateur.setRole(defaultRole);
+            pendingUser.setRole(defaultRole);
 
-            // Appel au service pour l'inscription
-            utilisateurService.inscription(utilisateur);
+            // Appel au service pour l'inscription temporaire
+            pendingUserService.registerPendingUser(pendingUser);
 
-            logger.info("Inscription réussie pour l'email: {}", request.getEmail());
+            logger.info("Inscription en attente pour l'email: {}", request.getEmail());
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse(true, "Inscription réussie. Veuillez vérifier votre email pour activer votre compte."));
+                    .body(new ApiResponse(true,
+                            "Inscription enregistrée. " +
+                                    "Veuillez vérifier votre email pour confirmer votre adresse. " +
+                                    "Votre compte sera ensuite soumis à approbation administrative."));
         } catch (ValidationException e) {
             logger.warn("Erreur de validation lors de l'inscription: {}", e.getMessage());
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, e.getMessage()));
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         } catch (AuthenticationException e) {
             logger.warn("Erreur d'authentification lors de l'inscription: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT)
+           return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new ApiResponse(false, e.getMessage()));
-        } catch (Exception e) {
-            logger.error("Erreur lors de l'inscription: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(false, "Une erreur est survenue lors de l'inscription."));
+       } catch (Exception e) {
+           logger.error("Erreur lors de l'inscription: {}", e.getMessage(), e);
+           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                   .body(new ApiResponse(false, "Une erreur est survenue lors de l'inscription."));
         }
-    }
-
+   }
     /**
      * Activation d'un compte utilisateur
      */
@@ -132,17 +135,13 @@ public class UtilisateurController {
             logger.info("Tentative de connexion pour l'utilisateur: {}", authentificationDTO.username());
 
             // Vérification préalable si le compte existe et son statut d'activation
-            try {
-                Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findByEmail(authentificationDTO.username());
-                if (utilisateurOpt.isPresent() && !utilisateurOpt.get().isActif()) {
-                    logger.warn("Tentative de connexion à un compte non activé: {}", authentificationDTO.username());
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(new ApiResponse(false, "Compte non activé. Veuillez vérifier votre email pour activer votre compte."));
-                }
-            } catch (Exception e) {
-                // Ignorer les erreurs lors de cette vérification préliminaire
-                logger.debug("Erreur lors de la vérification préliminaire: {}", e.getMessage());
+            Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findByEmail(authentificationDTO.username());
+            if (utilisateurOpt.isPresent() && !utilisateurOpt.get().isActif()) {
+                logger.warn("Tentative de connexion à un compte non activé: {}", authentificationDTO.username());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse(false, "Compte non activé. Veuillez vérifier votre email pour activer votre compte."));
             }
+
             // Authentification via Spring Security
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -152,8 +151,17 @@ public class UtilisateurController {
             );
 
             if (auth.isAuthenticated()) {
+                // Récupérer l'utilisateur et son rôle
+                Utilisateur utilisateur = utilisateurOpt.orElseThrow(() ->
+                        new RuntimeException("Utilisateur non trouvé après authentification")
+                );
+                String role = utilisateur.getRole().getLibelle().name(); // e.g., "ADMIN", "USER", etc.
+
                 // Génération des tokens JWT
                 Map<String, String> tokens = jwtService.generate(authentificationDTO.username());
+
+                // Ajouter le rôle à la réponse
+                tokens.put("role", role); // Include role in the response
 
                 logger.info("Connexion réussie pour l'utilisateur: {}", authentificationDTO.username());
                 return ResponseEntity.ok(new ApiResponse(true, "Connexion réussie", tokens));
@@ -176,7 +184,6 @@ public class UtilisateurController {
                     .body(new ApiResponse(false, "Une erreur est survenue lors de la connexion."));
         }
     }
-
     /**
      * Rafraîchissement du token JWT
      */

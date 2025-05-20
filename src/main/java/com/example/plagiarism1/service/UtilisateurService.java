@@ -4,7 +4,7 @@ import com.example.plagiarism1.TypeDeRole;
 import com.example.plagiarism1.dto.UtilisateurDTO;
 import com.example.plagiarism1.model.*;
 import com.example.plagiarism1.repository.JwtRepository;
-import com.example.plagiarism1.repository.PendingUtilisateurRepository;
+import com.example.plagiarism1.repository.PendingUserRepository;
 import com.example.plagiarism1.repository.UtilisateurRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,49 +20,55 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 @Service
 public class UtilisateurService implements UserDetailsService {
     private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
     private UtilisateurRepository utilisateurRepository;
+    private PendingUserRepository pendingUserRepository; // Ajouté
     private JwtRepository jwtRepository;
     private BCryptPasswordEncoder passwordEncoder;
     private ValidationService validationService;
-    private final PendingUtilisateurRepository pendingRepo;
+    private final NotificationService notificationService;
 
-    public UtilisateurService(UtilisateurRepository utilisateurRepository, JwtRepository jwtRepository, BCryptPasswordEncoder passwordEncoder, ValidationService validationService, PendingUtilisateurRepository pendingRepo) {
+    public UtilisateurService(UtilisateurRepository utilisateurRepository,
+                              PendingUserRepository pendingUserRepository, // Ajouté
+                              JwtRepository jwtRepository,
+                              BCryptPasswordEncoder passwordEncoder,
+                              ValidationService validationService, NotificationService notificationService) {
         this.utilisateurRepository = utilisateurRepository;
+        this.pendingUserRepository = pendingUserRepository; // Ajouté
         this.passwordEncoder = passwordEncoder;
-        this.jwtRepository=jwtRepository;
+        this.jwtRepository = jwtRepository;
         this.validationService = validationService;
-        this.pendingRepo = pendingRepo;
+        this.notificationService = notificationService;
     }
-
-    public void inscription(Utilisateur utilisateur) {
-        // Vérification email
-        if (!utilisateur.getEmail().matches("[^@]+@[^@]+\\.[^@]+")) {
-            throw new RuntimeException("Email invalide");
-        }
-
-        if (pendingRepo.findByEmail(utilisateur.getEmail()).isPresent()) {
-            throw new RuntimeException("Cet email est déjà en attente de validation.");
-        }
-
-        // Encoder mot de passe
-        utilisateur.setPassword(passwordEncoder.encode(utilisateur.getPassword()));
-
-        // Créer PendingUtilisateur
-        PendingUtilisateur pending = new PendingUtilisateur();
-        pending.setNom(utilisateur.getNom());
-        pending.setPrenom(utilisateur.getPrenom());
-        pending.setEmail(utilisateur.getEmail());
-        pending.setPassword(utilisateur.getPassword());
-        pending.setRole(utilisateur.getRole());
-        pending.setProvider(utilisateur.getProvider());
-
-        pendingRepo.save(pending);
-    }
-
+//
+//    public void inscription(Utilisateur utilisateur) {
+//        // Validation email
+//        if (!utilisateur.getEmail().matches("[^@]+@[^@]+\\.[^@]+")) {
+//            throw new RuntimeException("Email invalide");
+//        }
+//
+//        // Vérification email existant
+//        if (utilisateurRepository.findByEmail(utilisateur.getEmail()).isPresent() ||
+//                pendingUserRepository.findByEmail(utilisateur.getEmail()).isPresent()) {
+//            throw new RuntimeException("Email déjà utilisé ou en attente de validation");
+//        }
+//
+//        utilisateur.setNom(utilisateur.getNom());
+//        utilisateur.setPrenom(utilisateur.getPrenom());
+//        utilisateur.setEmail(utilisateur.getEmail());
+//        utilisateur.setPassword(passwordEncoder.encode(utilisateur.getPassword()));
+//        utilisateur.setRole(utilisateur.getRole());
+//
+//        utilisateurRepository.save(utilisateur);
+//
+//        // 1. Envoi du code de validation à l'utilisateur
+//        validationService.enregistrer(utilisateur);
+////
+////        // 2. Notification à l'admin
+////        notificationService.notifierAdminNouvelleInscription(pendingUser);
+//    }
     public void activation(Map<String, String> activation) {
         Validation validation = this.validationService.lireEnFonctionDuCode(activation.get("code"));
         if(Instant.now().isAfter(validation.getExpire())){

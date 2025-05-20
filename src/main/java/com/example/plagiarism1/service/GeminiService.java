@@ -14,10 +14,27 @@ public class GeminiService {
     private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=" + API_KEY;
 
     public String detectAi(String texte) {
-
         RestTemplate restTemplate = new RestTemplate();
-        String prompt = "\"Analyse ce texte et décide s’il a été généré par une IA ou écrit par un humain. Réponds uniquement par : IA ou Humain.  \n" + texte + "\"";
 
+        // Prompt optimisé pour une détection précise
+        String prompt = """
+            Analyse ce texte et détermine s'il a été généré par une IA (comme GPT, Gemini, etc.) ou écrit par un humain.
+            Sois attentif aux signes suivants :
+            - Répétitions excessives
+            - Structure trop parfaite
+            - Manque de profondeur émotionnelle
+            - Phrases génériques
+            - Patterns prévisibles
+
+            Réponds UNIQUEMENT par l'un des mots suivants :
+            - "IA" si le texte est clairement généré par une IA.
+            - "Humain" si le texte est authentiquement humain.
+            - "Incertain" si tu ne peux pas trancher.
+
+            Texte à analyser :
+            """ + texte;
+
+        // Construction de la requête
         Map<String, Object> part = new HashMap<>();
         part.put("text", prompt);
 
@@ -27,6 +44,11 @@ public class GeminiService {
 
         Map<String, Object> body = new HashMap<>();
         body.put("contents", Collections.singletonList(message));
+        body.put("generationConfig", Map.of(
+                "temperature", 0.0,  // Réduit la créativité pour plus de rigueur
+                "topP", 0.1,
+                "maxOutputTokens", 10
+        ));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -34,23 +56,23 @@ public class GeminiService {
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(GEMINI_URL, request, Map.class);
-
-            if (response.getBody() != null) {
-                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.getBody().get("candidates");
-
-                if (candidates != null && !candidates.isEmpty()) {
-                    Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-                    List<Map<String, String>> parts = (List<Map<String, String>>) content.get("parts");
-                    return parts.get(0).get("text").trim(); // "IA" ou "Humain"
-                } else {
-                    return "Aucune réponse générée.";
-                }
-            } else {
-                return "Erreur dans la réponse de l'API.";
-            }
-
+            return extractResponse(response.getBody());
         } catch (Exception e) {
-            return "Erreur lors de l’analyse : " + e.getMessage();
+            return "Erreur : " + e.getMessage();
         }
+    }
+
+    private String extractResponse(Map<String, Object> responseBody) {
+        if (responseBody == null) return "Erreur : réponse vide";
+
+        List<Map<String, Object>> candidates = (List<Map<String, Object>>) responseBody.get("candidates");
+        if (candidates == null || candidates.isEmpty()) return "Aucune réponse générée";
+
+        Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+        List<Map<String, String>> parts = (List<Map<String, String>>) content.get("parts");
+        String response = parts.get(0).get("text").trim();
+
+        // Validation stricte de la réponse
+        return response.matches("IA|Humain|Incertain") ? response : "Incertain";
     }
 }

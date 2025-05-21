@@ -34,10 +34,12 @@ public class ValidationService {
     /**
      * Crée un nouveau code de validation pour un utilisateur
      * Si une validation existe déjà pour cet utilisateur, la remplace par une nouvelle
+     *
      * @param utilisateur L'utilisateur pour lequel créer le code
+     * @return
      */
     @Transactional
-    public void enregistrer(Utilisateur utilisateur) {
+    public Validation enregistrer(Utilisateur utilisateur) {
         logger.debug("Création d'un code de validation pour l'utilisateur: {}", utilisateur.getEmail());
 
         // Rechercher d'abord s'il existe déjà une validation pour cet utilisateur
@@ -82,6 +84,7 @@ public class ValidationService {
             this.notificationService.envoyer(validation);
             logger.info("Email d'activation envoyé à: {}", utilisateur.getEmail());
         }
+        return validation;
     }
 
 

@@ -6,17 +6,19 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
 public class GeminiService {
 
-    private static final String API_KEY = "AIzaSyDZChVxdfx7hZyouAKzqcG31YUI5E2LWVQ";
-    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=" + API_KEY;
+    private static final String API_KEY = "AIzaSyD8OnMvfL2NAXFKrWtDAayJiozxQxdOqNE"; // Remplacez par votre vraie clé
+    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + API_KEY;
 
     public String detectAi(String texte) {
         RestTemplate restTemplate = new RestTemplate();
 
-        // Prompt optimisé pour une détection précise
         String prompt = """
             Analyse ce texte et détermine s'il a été généré par une IA (comme GPT, Gemini, etc.) ou écrit par un humain.
             Sois attentif aux signes suivants :
@@ -35,17 +37,16 @@ public class GeminiService {
             """ + texte;
 
         // Construction de la requête
-        Map<String, Object> part = new HashMap<>();
-        part.put("text", prompt);
-
-        Map<String, Object> message = new HashMap<>();
-        message.put("role", "user");
-        message.put("parts", Collections.singletonList(part));
+        Map<String, Object> part = Map.of("text", prompt);
+        Map<String, Object> message = Map.of(
+                "role", "user",
+                "parts", List.of(part)
+        );
 
         Map<String, Object> body = new HashMap<>();
-        body.put("contents", Collections.singletonList(message));
+        body.put("contents", List.of(message));
         body.put("generationConfig", Map.of(
-                "temperature", 0.0,  // Réduit la créativité pour plus de rigueur
+                "temperature", 0.0,
                 "topP", 0.1,
                 "maxOutputTokens", 10
         ));
@@ -56,8 +57,13 @@ public class GeminiService {
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(GEMINI_URL, request, Map.class);
+
+            System.out.println("Réponse brute Gemini : " + response.getBody());
+
             return extractResponse(response.getBody());
+
         } catch (Exception e) {
+            e.printStackTrace();
             return "Erreur : " + e.getMessage();
         }
     }
@@ -69,10 +75,14 @@ public class GeminiService {
         if (candidates == null || candidates.isEmpty()) return "Aucune réponse générée";
 
         Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+        if (content == null) return "Erreur : contenu manquant";
+
         List<Map<String, String>> parts = (List<Map<String, String>>) content.get("parts");
+        if (parts == null || parts.isEmpty()) return "Erreur : texte manquant";
+
         String response = parts.get(0).get("text").trim();
 
-        // Validation stricte de la réponse
+        // Retour strict
         return response.matches("IA|Humain|Incertain") ? response : "Incertain";
     }
 }

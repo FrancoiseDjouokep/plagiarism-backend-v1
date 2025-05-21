@@ -24,12 +24,12 @@ public class Analysis {
 
     @ElementCollection
     @CollectionTable(name = "analysis_suspect_phrases_source", joinColumns = @JoinColumn(name = "analysis_id"))
-
+    @Column(length = 20000)
     private List<String> suspectPhrasesSource;
 
     @ElementCollection
     @CollectionTable(name = "analysis_suspect_phrases_target", joinColumns = @JoinColumn(name = "analysis_id"))
-
+    @Column(length = 20000)
     private List<String> suspectPhrasesTarget;
 
     @ManyToOne

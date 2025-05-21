@@ -1,5 +1,6 @@
 package com.example.plagiarism1.service;
 
+import com.example.plagiarism1.TypeDeRole;
 import com.example.plagiarism1.model.PendingUser;
 import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.repository.PendingUserRepository;
@@ -31,6 +32,9 @@ public class AdminService {
 
         if (!pendingUser.isEmailVerified()) {
             throw new RuntimeException("Email non vérifié");
+        }
+        if (pendingUser.getRole().getLibelle() != TypeDeRole.ENSEIGNANT) {
+            throw new RuntimeException("Seuls les enseignants nécessitent une validation");
         }
 
         // Conversion vers Utilisateur

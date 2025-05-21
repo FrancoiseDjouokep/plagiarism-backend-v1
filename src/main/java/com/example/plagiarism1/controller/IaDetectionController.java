@@ -2,6 +2,7 @@ package com.example.plagiarism1.controller;
 
 import com.example.plagiarism1.service.GeminiService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,7 +19,7 @@ public class IaDetectionController {
         this.geminiService = geminiService;
     }
 
-    @PostMapping("/detect")
+    @PostMapping(value ="/detect", consumes = MediaType.TEXT_PLAIN_VALUE)
     @io.swagger.v3.oas.annotations.Operation(summary = "analyse a document")
     public ResponseEntity<String> detect( @RequestBody String texte) {
         String result = geminiService.detectAi(texte);

@@ -1,10 +1,7 @@
 package com.example.plagiarism1.service;
 
 import com.example.plagiarism1.TypeDeRole;
-import com.example.plagiarism1.model.PendingUser;
-import com.example.plagiarism1.model.PendingValidation;
-import com.example.plagiarism1.model.Role;
-import com.example.plagiarism1.model.Utilisateur;
+import com.example.plagiarism1.model.*;
 import com.example.plagiarism1.repository.JwtRepository;
 import com.example.plagiarism1.repository.PendingUserRepository;
 import com.example.plagiarism1.repository.RoleRepository;
@@ -14,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PendingUserService {
@@ -37,27 +35,20 @@ public class PendingUserService {
         this.roleRepository = roleRepository;
     }
 
+    @Transactional
     public void registerPendingUser(PendingUser pendingUser) {
-        if (pendingUser.getRole() == null) {
-            // Récupérer le rôle existant au lieu d'en créer un nouveau
-            Role defaultRole = roleRepository.findByLibelle(TypeDeRole.ETUDIANT)
-                    .orElseThrow(() -> new RuntimeException("Rôle ETUDIANT introuvable"));
-            pendingUser.setRole(defaultRole);
-        } else {
-            // Vérifier si le rôle existe déjà
-            Role existingRole = roleRepository.findByLibelle(pendingUser.getRole().getLibelle())
-                    .orElse(null);
-            if (existingRole != null) {
-                pendingUser.setRole(existingRole);
-            }
-        }
-        // 1. Vérifier que l'email n'est pas null
-        if (pendingUser.getEmail() == null) {
-            throw new RuntimeException("L'email est obligatoire");
-        }
+        // 1. Vérification et récupération du rôle
+        TypeDeRole roleType = pendingUser.getRole() != null
+                ? pendingUser.getRole().getLibelle()
+                : TypeDeRole.ETUDIANT;
 
-        // 2. Validation du format email (maintenant sur le bon objet)
-        if (!pendingUser.getEmail().matches("[^@]+@[^@]+\\.[^@]+")) {
+        Role role = roleRepository.findByLibelle(roleType)
+                .orElseThrow(() -> new RuntimeException("Rôle " + roleType + " introuvable"));
+
+        pendingUser.setRole(role);
+
+        // 2. Validation email
+        if (pendingUser.getEmail() == null || !pendingUser.getEmail().matches("[^@]+@[^@]+\\.[^@]+")) {
             throw new RuntimeException("Email invalide");
         }
 
@@ -70,12 +61,24 @@ public class PendingUserService {
         // 4. Hashage du mot de passe
         pendingUser.setPassword(passwordEncoder.encode(pendingUser.getPassword()));
 
-        // 5. Sauvegarde
-        PendingUser savedUser = pendingUserRepository.save(pendingUser);
-        PendingValidation validation = validationService.enregistrer(savedUser);
-        // 6. Envoi des notifications
-        validationService.enregistrer(pendingUser);
-        notificationService.envoyerPendingUserValidation(validation);
-        notificationService.notifierAdminNouvelleInscription(savedUser);
+        // 5. Gestion selon le rôle
+        if (roleType == TypeDeRole.ETUDIANT) {
+            Utilisateur utilisateur = new Utilisateur();
+            utilisateur.setNom(pendingUser.getNom());
+            utilisateur.setPrenom(pendingUser.getPrenom());
+            utilisateur.setEmail(pendingUser.getEmail());
+            utilisateur.setPassword(pendingUser.getPassword());
+            utilisateur.setRole(role); // Utilisez le rôle persisté
+            utilisateur.setActif(false);
+
+            utilisateurRepository.save(utilisateur); // Sauvegarder d'abord
+            Validation validation = validationService.enregistrer(utilisateur); // Puis créer la validation
+            notificationService.envoyer(validation);
+        } else {
+            PendingUser savedUser = pendingUserRepository.save(pendingUser);
+            PendingValidation validation = validationService.enregistrer(savedUser);
+            notificationService.envoyerPendingUserValidation(validation);
+            notificationService.notifierAdminNouvelleInscription(savedUser);
+        }
     }
 }

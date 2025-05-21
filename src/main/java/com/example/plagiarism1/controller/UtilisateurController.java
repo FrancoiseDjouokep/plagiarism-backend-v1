@@ -56,48 +56,62 @@ public class UtilisateurController {
         this.jwtService = jwtService;
     }
 
-    /**
-     * Inscription d'un nouvel utilisateur (version modifiée)
-     */
+
     @PostMapping("/inscription")
     public ResponseEntity<ApiResponse> inscription(@Valid @RequestBody InscriptionRequest request) {
         try {
             logger.info("Tentative d'inscription pour l'email: {}", request.getEmail());
 
-            // Conversion du DTO en entité PendingUser au lieu de Utilisateur
+            // Conversion du DTO en entité PendingUser
             PendingUser pendingUser = new PendingUser();
             pendingUser.setNom(request.getNom());
             pendingUser.setPrenom(request.getPrenom());
             pendingUser.setEmail(request.getEmail());
             pendingUser.setPassword(request.getPassword());
 
-            // Création du rôle par défaut
-            Role defaultRole = new Role();
-            defaultRole.setLibelle(TypeDeRole.ETUDIANT);
-            pendingUser.setRole(defaultRole);
+            // Gestion du rôle
+            if (request.getRole() != null) {
+                Role role = new Role();
+                role.setLibelle(request.getRole());
+                pendingUser.setRole(role);
+            }
 
-            // Appel au service pour l'inscription temporaire
+            // Appel au service
             pendingUserService.registerPendingUser(pendingUser);
 
-            logger.info("Inscription en attente pour l'email: {}", request.getEmail());
+            // Construction de la réponse selon le type d'utilisateur
+            String message;
+            if (request.getRole() == TypeDeRole.ETUDIANT || request.getRole() == null) {
+                message = "Votre compte étudiant a été créé. Veuillez vérifier votre email pour activer votre compte.";
+            } else {
+                message = "Votre demande d'inscription en tant qu'enseignant a été enregistrée. Elle nécessite une validation administrative.";
+            }
+
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse(true,
-                            "Inscription enregistrée. " +
-                                    "Veuillez vérifier votre email pour confirmer votre adresse. " +
-                                    "Votre compte sera ensuite soumis à approbation administrative."));
-        } catch (ValidationException e) {
-            logger.warn("Erreur de validation lors de l'inscription: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        } catch (AuthenticationException e) {
-            logger.warn("Erreur d'authentification lors de l'inscription: {}", e.getMessage());
-           return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ApiResponse(false, e.getMessage()));
-       } catch (Exception e) {
-           logger.error("Erreur lors de l'inscription: {}", e.getMessage(), e);
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                   .body(new ApiResponse(false, "Une erreur est survenue lors de l'inscription."));
+                    .body(new ApiResponse(true, message));
+
+        } catch (RuntimeException e) {
+            logger.error("Erreur lors de l'inscription: {}", e.getMessage());
+
+            // Gestion des erreurs spécifiques
+            String errorMessage;
+            if (e.getMessage().contains("Email invalide")) {
+                errorMessage = "L'adresse email est invalide.";
+                return ResponseEntity.badRequest().body(new ApiResponse(false, errorMessage));
+            } else if (e.getMessage().contains("déjà utilisé")) {
+                errorMessage = "Cette adresse email est déjà utilisée.";
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(new ApiResponse(false, errorMessage));
+            } else if (e.getMessage().contains("Rôle spécifié non valide")) {
+                errorMessage = "Le rôle spécifié n'est pas valide.";
+                return ResponseEntity.badRequest().body(new ApiResponse(false, errorMessage));
+            } else {
+                errorMessage = "Une erreur est survenue lors de l'inscription.";
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponse(false, errorMessage));
+            }
         }
-   }
+    }
     /**
      * Activation d'un compte utilisateur
      */

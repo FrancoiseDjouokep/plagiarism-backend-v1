@@ -1,6 +1,7 @@
 package com.example.plagiarism1.dto;
 
 
+import com.example.plagiarism1.TypeDeRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -23,15 +24,18 @@ public class InscriptionRequest {
     @Size(min = 6, message = "Le mot de passe doit contenir au moins 6 caractères")
     private String password;
 
+    private TypeDeRole role;
+
     // Constructeurs
     public InscriptionRequest() {
     }
 
-    public InscriptionRequest(String nom, String prenom, String email, String password) {
+    public InscriptionRequest(String nom, String prenom, String email, String password, TypeDeRole role) {
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 
     // Getters et Setters
@@ -65,5 +69,13 @@ public class InscriptionRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public TypeDeRole getRole() {
+        return role;
+    }
+
+    public void setRole(TypeDeRole role) {
+        this.role = role;
     }
 }

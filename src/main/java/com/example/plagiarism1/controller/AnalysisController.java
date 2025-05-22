@@ -7,6 +7,7 @@ import com.example.plagiarism1.service.AnalysisService;
 import com.example.plagiarism1.service.DocumentService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,4 +37,10 @@ public class AnalysisController {
     public List<Analysis> list() {
         return analysisService.getAllAnalysis();
     }
+    @GetMapping("/my-analyses")
+    public ResponseEntity<List<Analysis>> getMyAnalyses(@AuthenticationPrincipal Utilisateur utilisateur) {
+        List<Analysis> analyses = analysisService.getAnalysesByUtilisateur(utilisateur.getEmail());
+        return ResponseEntity.ok(analyses);
+    }
+
 }

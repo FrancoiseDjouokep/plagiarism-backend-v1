@@ -83,6 +83,7 @@ public class ConfigurationSecurite {
                         .requestMatchers(HttpMethod.POST, "/api/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ia/detect").permitAll()
+                        .requestMatchers(HttpMethod.GET, "api/analysis/my-analyses").permitAll()
                         .requestMatchers(HttpMethod.GET, "/oauth2/authorization/google").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/documents/upload").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
                         .requestMatchers(HttpMethod.GET, "/api/documents/select").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")

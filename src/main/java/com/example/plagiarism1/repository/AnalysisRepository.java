@@ -11,4 +11,6 @@ import java.util.List;
 public interface AnalysisRepository extends JpaRepository<Analysis, Long> {
     List<Analysis> findBySourceDocumentId(Long sourceDocumentId);
 
+    List<Analysis> findAllByUtilisateurEmail(String email);
+
 }

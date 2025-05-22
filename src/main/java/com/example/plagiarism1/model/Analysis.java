@@ -14,7 +14,9 @@ public class Analysis {
     private long sourceDocumentId;
 
     private long targetDocumentId;
+    private String sourceDocumentTitle;
 
+    private String targetDocumentTitle;
     private double similarityScore;
     private  int nGramSize;
     private double threshold;
@@ -35,8 +37,10 @@ public class Analysis {
     @ManyToOne
     private Utilisateur utilisateur;
 
-    public Analysis(long id, String status, Boolean isCrossLanguage, LocalDateTime creationDate, double threshold, int nGramSize, double similarityScore, long targetDocumentId, long sourceDocumentId, List<String> suspectPhrasesSource, List<String> suspectPhrasesTarget, Utilisateur utilisateur) {
+    public Analysis(long id, String sourceDocumentTitle, String targetDocumentTitle, String status, Boolean isCrossLanguage, LocalDateTime creationDate, double threshold, int nGramSize, double similarityScore, long targetDocumentId, long sourceDocumentId, List<String> suspectPhrasesSource, List<String> suspectPhrasesTarget, Utilisateur utilisateur) {
         this.id = id;
+        this.sourceDocumentTitle = sourceDocumentTitle;
+        this.targetDocumentTitle = targetDocumentTitle;
         this.status = status;
         this.isCrossLanguage = isCrossLanguage;
         this.creationDate = creationDate;
@@ -150,4 +154,19 @@ public class Analysis {
         this.suspectPhrasesTarget = suspectPhrasesTarget;
     }
 
+    public String getSourceDocumentTitle() {
+        return sourceDocumentTitle;
+    }
+
+    public void setSourceDocumentTitle(String sourceDocumentTitle) {
+        this.sourceDocumentTitle = sourceDocumentTitle;
+    }
+
+    public String getTargetDocumentTitle() {
+        return targetDocumentTitle;
+    }
+
+    public void setTargetDocumentTitle(String targetDocumentTitle) {
+        this.targetDocumentTitle = targetDocumentTitle;
+    }
 }

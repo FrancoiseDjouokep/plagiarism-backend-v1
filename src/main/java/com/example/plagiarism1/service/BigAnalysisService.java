@@ -65,6 +65,8 @@ public class BigAnalysisService {
                 ana.setCreationDate(LocalDateTime.now());
                 ana.setSourceDocumentId(uploadedDoc.getId());
                 ana.setTargetDocumentId(doc.getId());
+                ana.setSourceDocumentTitle(uploadedDoc.getTitle());
+                ana.setTargetDocumentTitle(doc.getTitle());
                 ana.setSimilarityScore(similarity);
                 ana.setUtilisateur((Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
                 ana.setSuspectPhrasesSource(phrasesSource);

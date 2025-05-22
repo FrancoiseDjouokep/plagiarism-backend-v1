@@ -95,6 +95,8 @@ public class AnalysisService {
         ana.setCreationDate(LocalDateTime.now());
         ana.setSourceDocumentId(uploadedDoc.getId());
         ana.setTargetDocumentId(targetDoc.getId());
+        ana.setSourceDocumentTitle(uploadedDoc.getTitle());
+        ana.setTargetDocumentTitle(targetDoc.getTitle());
         ana.setSimilarityScore(similarity);
         ana.setUtilisateur((Utilisateur) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         ana.setSuspectPhrasesSource(phrasesSource);
@@ -102,5 +104,9 @@ public class AnalysisService {
 
         return analysisRepository.save(ana);
     }
+    public List<Analysis> getAnalysesByUtilisateur(String email) {
+        return analysisRepository.findAllByUtilisateurEmail(email);
+    }
+
 
 }

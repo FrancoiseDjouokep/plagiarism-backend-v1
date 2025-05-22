@@ -1,5 +1,6 @@
 package com.example.plagiarism1.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -17,6 +18,7 @@ public class PendingValidation {
 
     @OneToOne
     @JoinColumn(name = "pending_user_id")
+    @JsonManagedReference
     private PendingUser pendingUser;
 
     public PendingValidation(Long id, String code, Instant creation, Instant expire, PendingUser pendingUser) {

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/verification")
+@RequestMapping("/api")
 public class PendingValidationController {
 
     private final ValidationService validationService;

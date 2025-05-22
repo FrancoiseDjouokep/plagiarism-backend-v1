@@ -2,6 +2,7 @@ package com.example.plagiarism1.controller;
 
 import com.example.plagiarism1.model.Analysis;
 import com.example.plagiarism1.model.Document;
+import com.example.plagiarism1.model.Utilisateur;
 import com.example.plagiarism1.service.AnalysisService;
 import com.example.plagiarism1.service.DocumentService;
 import org.springframework.http.MediaType;
@@ -29,5 +30,10 @@ public class AnalysisController {
 
         Analysis analysis = analysisService.JaccardDistance(file, title, targetDocumentTitle);
         return ResponseEntity.ok(analysis);
+    }
+
+    @GetMapping("/get-all")
+    public List<Analysis> list() {
+        return analysisService.getAllAnalysis();
     }
 }

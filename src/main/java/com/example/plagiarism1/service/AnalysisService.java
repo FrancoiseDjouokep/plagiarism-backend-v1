@@ -27,6 +27,9 @@ public class AnalysisService {
         this.analysisRepository = analysisRepository;
         this.bigAnalysisService = bigAnalysisService;
     }
+    public List<Analysis> getAllAnalysis() {
+        return analysisRepository.findAll();
+    }
 
     public Analysis JaccardDistance(MultipartFile file, String title, String targetDocumentTitle) {
         // Recherche du document par titre
@@ -98,9 +101,6 @@ public class AnalysisService {
         ana.setSuspectPhrasesTarget(phrasesTarget);
 
         return analysisRepository.save(ana);
-    }
-    public List<Analysis> getAllAnalysis() {
-        return analysisRepository.findAll();
     }
 
 }

@@ -1,6 +1,7 @@
 package com.example.plagiarism1.controller;
 
 import com.example.plagiarism1.dto.ApiResponse;
+import com.example.plagiarism1.dto.PendingUserDTO;
 import com.example.plagiarism1.dto.RejetRequest;
 import com.example.plagiarism1.model.PendingUser;
 import com.example.plagiarism1.repository.PendingUserRepository;
@@ -33,9 +34,20 @@ public class AdminValidationController {
      * Liste toutes les inscriptions en attente
      */
     @GetMapping("/pending-users")
-    public ResponseEntity<List<PendingUser>> listerInscriptionsEnAttente() {
-        List<PendingUser> pendingUsers = pendingUserRepository.findAllByEmailVerifiedTrue();
-        return ResponseEntity.ok(pendingUsers);
+    public ResponseEntity<List<PendingUserDTO>> listerInscriptionsEnAttente() {
+        List<PendingUser> users = pendingUserRepository.findAllByEmailVerifiedTrue();
+        List<PendingUserDTO> dtos = users.stream().map(this::convertToDTO).toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    private PendingUserDTO convertToDTO(PendingUser user) {
+        return new PendingUserDTO(
+                user.getId(),
+                user.getNom(),
+                user.getPrenom(),
+                user.getEmail(),
+                user.getRole() != null ? user.getRole().getLibelle().name() : null
+        );
     }
 
     /**
@@ -77,7 +89,4 @@ public class AdminValidationController {
                     .body(new ApiResponse(false, e.getMessage()));
         }
     }
-
-    // DTO pour la requête de rejet
-
 }

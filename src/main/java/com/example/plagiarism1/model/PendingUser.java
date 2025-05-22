@@ -1,5 +1,7 @@
 package com.example.plagiarism1.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -25,6 +27,7 @@ public class PendingUser {
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "role_id")
+    @JsonBackReference
     private Role role;
 
     @Column(nullable = false)
@@ -34,6 +37,7 @@ public class PendingUser {
     private boolean emailVerified = false;
 
     @OneToOne(mappedBy = "pendingUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonBackReference
     private PendingValidation validation;
 
     public PendingUser(Long id, String nom, String prenom, String email, String password, Role role, LocalDateTime creationDate, boolean emailVerified, PendingValidation validation) {

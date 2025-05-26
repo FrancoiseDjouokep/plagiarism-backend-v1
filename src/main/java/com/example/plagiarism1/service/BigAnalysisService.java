@@ -158,7 +158,7 @@ public class BigAnalysisService {
             highlighted = highlighted.replace(
                     sentence,
                             "[" + matchId + "] " + sentence +
-                            " "
+                                    "[/" + matchId + "] "
             );
         }
         return highlighted;

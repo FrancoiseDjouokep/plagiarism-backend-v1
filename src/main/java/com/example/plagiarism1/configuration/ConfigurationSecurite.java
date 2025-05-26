@@ -89,6 +89,7 @@ public class ConfigurationSecurite {
                         .requestMatchers(HttpMethod.GET, "/api/documents/select").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
                         .requestMatchers(HttpMethod.POST, "/api/analysis/compare-by-title").hasAnyAuthority("ROLE_ADMIN", "ROLE_ENSEIGNANT")
                         .requestMatchers(HttpMethod.GET, "/api/select").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/analysis/get-all").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))

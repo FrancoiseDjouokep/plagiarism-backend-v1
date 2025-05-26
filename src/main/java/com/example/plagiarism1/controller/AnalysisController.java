@@ -7,6 +7,7 @@ import com.example.plagiarism1.service.AnalysisService;
 import com.example.plagiarism1.service.DocumentService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -33,10 +34,12 @@ public class AnalysisController {
         return ResponseEntity.ok(analysis);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/get-all")
     public List<Analysis> list() {
         return analysisService.getAllAnalysis();
     }
+
     @GetMapping("/my-analyses")
     public ResponseEntity<List<Analysis>> getMyAnalyses(@AuthenticationPrincipal Utilisateur utilisateur) {
         List<Analysis> analyses = analysisService.getAnalysesByUtilisateur(utilisateur.getEmail());

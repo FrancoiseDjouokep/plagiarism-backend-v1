@@ -42,33 +42,6 @@ public class UtilisateurService implements UserDetailsService {
         this.validationService = validationService;
         this.notificationService = notificationService;
     }
-//
-//    public void inscription(Utilisateur utilisateur) {
-//        // Validation email
-//        if (!utilisateur.getEmail().matches("[^@]+@[^@]+\\.[^@]+")) {
-//            throw new RuntimeException("Email invalide");
-//        }
-//
-//        // Vérification email existant
-//        if (utilisateurRepository.findByEmail(utilisateur.getEmail()).isPresent() ||
-//                pendingUserRepository.findByEmail(utilisateur.getEmail()).isPresent()) {
-//            throw new RuntimeException("Email déjà utilisé ou en attente de validation");
-//        }
-//
-//        utilisateur.setNom(utilisateur.getNom());
-//        utilisateur.setPrenom(utilisateur.getPrenom());
-//        utilisateur.setEmail(utilisateur.getEmail());
-//        utilisateur.setPassword(passwordEncoder.encode(utilisateur.getPassword()));
-//        utilisateur.setRole(utilisateur.getRole());
-//
-//        utilisateurRepository.save(utilisateur);
-//
-//        // 1. Envoi du code de validation à l'utilisateur
-//        validationService.enregistrer(utilisateur);
-////
-////        // 2. Notification à l'admin
-////        notificationService.notifierAdminNouvelleInscription(pendingUser);
-//    }
     public void activation(Map<String, String> activation) {
         Validation validation = this.validationService.lireEnFonctionDuCode(activation.get("code"));
         if(Instant.now().isAfter(validation.getExpire())){

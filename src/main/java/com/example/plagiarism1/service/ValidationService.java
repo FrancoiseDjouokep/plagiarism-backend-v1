@@ -133,9 +133,17 @@ public class ValidationService {
      * Supprime une validation
      * @param validation La validation à supprimer
      */
+    @Transactional
     public void supprimer(Validation validation) {
-        this.validationRepository.delete(validation);
-        logger.debug("Validation supprimée pour l'utilisateur: {}",
-                validation.getUtilisateur() != null ? validation.getUtilisateur().getEmail() : "inconnu");
+        if (validation == null) return;
+
+        // Détacher d'abord l'utilisateur si nécessaire
+        validation.setUtilisateur(null);
+        validationRepository.save(validation); // Optionnel selon votre besoin
+
+        // Puis supprimer
+        validationRepository.delete(validation);
+
+        logger.info("Validation {} supprimée", validation.getId());
     }
 }

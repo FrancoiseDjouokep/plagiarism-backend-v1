@@ -87,40 +87,32 @@ public class UtilisateurService implements UserDetailsService {
         String code = resetPasswordData.get("code");
         String nouveauPassword = resetPasswordData.get("password");
 
-        // Validation
         if (code == null || nouveauPassword == null || nouveauPassword.length() < 8) {
             throw new RuntimeException("Données invalides");
         }
 
-        // 1. Trouver la validation sans supprimer quoi que ce soit
         Validation validation = validationService.lireEnFonctionDuCode(code);
         if (validation == null) {
             throw new RuntimeException("Code invalide");
         }
 
-        // 2. Vérifier l'expiration
         if (Instant.now().isAfter(validation.getExpire())) {
             throw new RuntimeException("Code expiré");
         }
 
-        // 3. Récupérer l'utilisateur
         Utilisateur utilisateur = validation.getUtilisateur();
         if (utilisateur == null) {
             throw new RuntimeException("Utilisateur introuvable");
         }
 
-        // 4. Journalisation avant modification
         logger.info("Reset password pour utilisateur ID: {}", utilisateur.getId());
 
-        // 5. Supprimer les JWT existants
         jwtRepository.deleteByUtilisateurId(utilisateur.getId());
 
-        // 6. Mettre à jour le mot de passe
         utilisateur.setPassword(passwordEncoder.encode(nouveauPassword));
         utilisateurRepository.save(utilisateur);
 
-        // 7. NE PAS supprimer l'utilisateur - seulement la validation
-        validationService.supprimer(validation); // Doit seulement supprimer l'entrée Validation
+        validationService.supprimer(validation);
 
         logger.info("Mot de passe mis à jour pour utilisateur ID: {}", utilisateur.getId());
     }

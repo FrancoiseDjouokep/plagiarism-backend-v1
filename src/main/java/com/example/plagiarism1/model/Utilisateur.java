@@ -38,7 +38,7 @@ public class Utilisateur implements UserDetails {
     @Column(nullable = false)
     private boolean actif = false;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
 

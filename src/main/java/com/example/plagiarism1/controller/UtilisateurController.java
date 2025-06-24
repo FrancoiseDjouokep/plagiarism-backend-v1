@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Contrôleur principal gérant toutes les opérations liées aux utilisateurs et à l'authentification
+  Contrôleur principal gérant toutes les opérations liées aux utilisateurs et à l'authentification
  */
 @RestController
 @RequestMapping("/api")

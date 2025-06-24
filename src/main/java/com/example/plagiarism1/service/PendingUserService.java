@@ -24,11 +24,11 @@ public class PendingUserService {
     private  final RoleRepository roleRepository;
 
     public PendingUserService(UtilisateurRepository utilisateurRepository,
-                              PendingUserRepository pendingUserRepository, // Ajouté
+                              PendingUserRepository pendingUserRepository,
                               BCryptPasswordEncoder passwordEncoder,
                               ValidationService validationService, NotificationService notificationService, RoleRepository roleRepository) {
         this.utilisateurRepository = utilisateurRepository;
-        this.pendingUserRepository = pendingUserRepository; // Ajouté
+        this.pendingUserRepository = pendingUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.validationService = validationService;
         this.notificationService = notificationService;
@@ -37,7 +37,7 @@ public class PendingUserService {
 
     @Transactional
     public void registerPendingUser(PendingUser pendingUser) {
-        // 1. Vérification et récupération du rôle
+
         TypeDeRole roleType = pendingUser.getRole() != null
                 ? pendingUser.getRole().getLibelle()
                 : TypeDeRole.ETUDIANT;
@@ -47,32 +47,31 @@ public class PendingUserService {
 
         pendingUser.setRole(role);
 
-        // 2. Validation email
+
         if (pendingUser.getEmail() == null || !pendingUser.getEmail().matches("[^@]+@[^@]+\\.[^@]+")) {
             throw new RuntimeException("Email invalide");
         }
 
-        // 3. Vérification email existant
         if (utilisateurRepository.findByEmail(pendingUser.getEmail()).isPresent() ||
                 pendingUserRepository.findByEmail(pendingUser.getEmail()).isPresent()) {
             throw new RuntimeException("Email déjà utilisé ou en attente de validation");
         }
 
-        // 4. Hashage du mot de passe
+
         pendingUser.setPassword(passwordEncoder.encode(pendingUser.getPassword()));
 
-        // 5. Gestion selon le rôle
+
         if (roleType == TypeDeRole.ETUDIANT) {
             Utilisateur utilisateur = new Utilisateur();
             utilisateur.setNom(pendingUser.getNom());
             utilisateur.setPrenom(pendingUser.getPrenom());
             utilisateur.setEmail(pendingUser.getEmail());
             utilisateur.setPassword(pendingUser.getPassword());
-            utilisateur.setRole(role); // Utilisez le rôle persisté
+            utilisateur.setRole(role);
             utilisateur.setActif(false);
 
-            utilisateurRepository.save(utilisateur); // Sauvegarder d'abord
-            Validation validation = validationService.enregistrer(utilisateur); // Puis créer la validation
+            utilisateurRepository.save(utilisateur);
+            Validation validation = validationService.enregistrer(utilisateur);
             notificationService.envoyer(validation);
         } else {
             PendingUser savedUser = pendingUserRepository.save(pendingUser);

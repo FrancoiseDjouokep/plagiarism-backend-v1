@@ -15,12 +15,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "Home Doctor API",
+                title = "PLAGIRIX API",
                 version = "1.0",
-                description = "API de gestion santé",
+                description = "API de detection de plagiat",
                 contact = @Contact(
-                        name = "Home Doctor Support",
-                        email = "support@homedoctor.com"
+                        name = "Leslie Admin",
+                        email = "francoiseleslie05@gmail.com"
                 )
         )
 //        servers = {

@@ -21,6 +21,9 @@ public class GeminiService {
 
         String prompt = """
     Analyse le texte fourni pour déterminer s'il a été généré par une intelligence artificielle (comme GPT, Gemini, etc.) ou s'il a été écrit par un humain.
+    Tu dois effectuer une double analyse :
+         1. **Donner un pourcentage approximatif** indiquant la proportion du texte qui semble générée par une IA.
+         2. **Justifier ta reponse avec des examples que tu prendra du texte fourni**.
 
     Pour t'aider dans cette analyse, voici des exemples clairs :
 
@@ -54,10 +57,9 @@ public class GeminiService {
     * **Signes d'un texte humain :** Présence de petites imperfections naturelles (fautes de frappe, erreurs grammaticales non systématiques, répétitions involontaires), utilisation d'un langage plus idiomatique, personnel, ou avec des variations inattendues, expressions de sentiments ou opinions subjectives de manière nuancée, un flux de pensée qui peut parfois sembler moins linéaire.
     * **Signes d'un texte généré par IA :** Cohérence grammaticale et orthographique quasi-parfaite, structure de phrase et de paragraphe très régulière et prévisible, absence de "bruit" humain typique (hésitations, reformulations évidentes), utilisation d'un vocabulaire riche mais souvent générique et optimisé pour la clarté/concision, manque de profondeur émotionnelle ou de personnalité distincte.
 
-    Réponds **UNIQUEMENT** par l'un des mots suivants :
-    - "IA" si le texte est clairement généré par une IA.
-    - "Humain" si le texte est authentiquement humain.
-    - "Incertain" si tu ne peux pas trancher.
+    Format de réponse attendu (respecte scrupuleusement la structure suivante) :
+    Pourcentage IA : 
+    Justification :
 
     Texte à analyser :
     """ + texte;
@@ -74,7 +76,7 @@ public class GeminiService {
         body.put("generationConfig", Map.of(
                 "temperature", 0.0,
                 "topP", 0.1,
-                "maxOutputTokens", 10
+                "maxOutputTokens", 512
         ));
 
         HttpHeaders headers = new HttpHeaders();
@@ -109,6 +111,6 @@ public class GeminiService {
         String response = parts.get(0).get("text").trim();
 
         // Retour strict
-        return response.matches("IA|Humain|Incertain") ? response : "Incertain";
+        return response;
     }
 }
